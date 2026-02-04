@@ -63,11 +63,12 @@ export default function ToursPage() {
         const durParam = params.get("duration");
 
         if (typeSlug) {
-          const allTypes = domainFiltered.flatMap(t => getField(t, 'types') || []);
-          const match = allTypes.find(ty => 
-            getField(ty, 'Slug') === typeSlug || 
-            getField(ty, 'Title')?.toLowerCase().replace(/\s+/g, '-') === typeSlug.toLowerCase()
-          );
+          // Adding : any to 't' and 'ty' satisfies the build requirements
+const allTypes = domainFiltered.flatMap((t: any) => getField(t, 'types') || []);
+const match = allTypes.find((ty: any) => 
+  getField(ty, 'Slug') === typeSlug || 
+  getField(ty, 'Title')?.toLowerCase().replace(/\s+/g, '-') === typeSlug.toLowerCase()
+);
           if (match) setFilterType(getField(match, 'Title'));
         }
 
