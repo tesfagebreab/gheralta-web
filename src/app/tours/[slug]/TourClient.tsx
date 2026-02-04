@@ -6,6 +6,7 @@ import { notFound, useParams, useRouter } from "next/navigation";
 import { STRAPI_URL, SITE_NAME, getBrand, getStrapiMedia } from "@/lib/constants";
 import { addToCart, getCart } from "@/lib/cart";
 import { Clock, Mountain, Map, MapPin, CheckCircle, Briefcase, Calendar } from "lucide-react";
+import React from 'react';
 import TourGallery from "@/components/TourGallery"; 
 
 // --- HELPERS ---
@@ -66,7 +67,7 @@ const renderStrapiBlocks = (content: any) => {
         );
 
       case 'heading':
-        const HeadingTag = `h${block.level || 3}` as keyof JSX.IntrinsicElements;
+        const HeadingTag = `h${block.level || 3}` as keyof React.JSX.IntrinsicElements;
         const headingSizes: Record<number, string> = {
           1: "text-3xl md:text-5xl lg:text-6xl font-black uppercase mb-6 italic tracking-tighter leading-[0.9] break-words",
           2: "text-2xl md:text-4xl font-black uppercase mb-5 italic tracking-tight leading-tight break-words",
