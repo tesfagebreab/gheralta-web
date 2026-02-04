@@ -233,7 +233,8 @@ export default function TourDetail() {
   const galleryImages = gallery.map((img: any) => ({
     url: getStrapiMedia(img) || "",
     alternativeText: img.alternativeText || img.caption || tour.Title || "Gallery Image"
-  })).filter(img => img.url !== "");
+  // Adding the type { url: string } tells TypeScript exactly what to expect
+})) .filter((img: { url: string }) => img.url !== "");
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
