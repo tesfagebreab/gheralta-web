@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import React from 'react';
 import { notFound } from "next/navigation";
 import { 
   STRAPI_URL, 
@@ -35,7 +36,7 @@ const RenderBlocks = ({ content, accentColor }: { content: any[], accentColor: s
         );
 
       case "heading":
-        const Tag = `h${block.level || 2}` as keyof JSX.IntrinsicElements;
+        const Tag = `h${block.level || 2}` as keyof React.JSX.IntrinsicElements;
         const sizeClass = block.level === 1 ? "text-3xl md:text-5xl" : "text-2xl md:text-3xl";
         return (
           <Tag key={index} className={`font-black uppercase italic tracking-tighter mt-12 mb-6 ${accentColor} ${sizeClass} leading-tight`}>
