@@ -1,7 +1,5 @@
 // src/lib/domain-helper.ts
-//This is where we put the logic that tells Railway which brand to show. 
-// It uses headers(), so it must only be used in Server Components.
-
+import 'server-only';
 import { headers } from 'next/headers';
 import { BRANDS, STRAPI_URL } from './constants';
 
@@ -11,7 +9,8 @@ export async function getActiveDomain() {
     const headerList = await headers();
     host = headerList.get('host')?.replace("www.", "").split(':')[0].toLowerCase() || "";
   } catch (e) {
-    // Falls back if called in a context where headers aren't available
+    // Falls back if called in a context where headers aren't available (like build time)
+    // console.warn("Headers not available, using fallback");
   }
 
   const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
@@ -47,7 +46,10 @@ export async function getDynamicContact() {
   const domain = await getActiveDomain();
 
   try {
-    const res = await fetch(`${STRAPI_URL}/api/contact-infos?populate=domain`, { 
+    // Ensure we don't crash if STRAPI_URL is missing in strict environments
+    const apiUrl = STRAPI_URL || 'http://localhost:1337';
+    
+    const res = await fetch(`${apiUrl}/api/contact-infos?populate=domain`, { 
       cache: 'no-store' 
     });
     

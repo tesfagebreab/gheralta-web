@@ -1,6 +1,4 @@
 // src/lib/constants.ts
-//We are removing the import { headers } and the SITE_NAME logic from here
-// This makes this file "safe" to be imported by any component, anywhere.
 
 /**
  * STRAPI_URL Sanitizer
