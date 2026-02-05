@@ -1,33 +1,43 @@
 // src/lib/constants.ts
+import { headers } from 'next/headers'; // Added for production domain detection
 
 export const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
 export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.dev";
 
 /**
- * SITE_NAME logic: Detects the domain to apply brand-specific styling.
+ * SITE_NAME logic: Dynamic detection for multi-domain production.
  */
-const getHostname = () => {
-  // 1. Check for the Environment Variable FIRST (for local testing via PowerShell)
-  const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
+export const getSiteName = () => {
+  const envSite = (process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME || "gheraltatours.com").toLowerCase();
   
-  // If we are in development and have an env variable set, use it!
-  if (process.env.NODE_ENV === 'development' && envSite) {
-    return envSite.toLowerCase();
-  }
-
-  // 2. Fallback to Browser Detection for Production/Live
+  // 1. Client-Side (Browser)
   if (typeof window !== "undefined") {
     const host = window.location.hostname.replace("www.", "").toLowerCase();
-    if (host === "localhost" || host === "127.0.0.1") {
-       return (envSite || "gheraltatours.com").toLowerCase();
+    // Use the actual domain if it's not a local or internal railway URL
+    if (host !== "localhost" && host !== "127.0.0.1" && !host.includes("railway.app")) {
+      return host;
     }
-    return host;
+    return envSite;
   }
-  
-  return (envSite || "gheraltatours.com").toLowerCase();
+
+  // 2. Server-Side (Production Request)
+  try {
+    const headerList = headers();
+    const host = headerList.get('host')?.replace("www.", "").toLowerCase();
+    
+    if (host && !host.includes("localhost") && !host.includes("railway.app")) {
+      return host;
+    }
+  } catch (e) {
+    // Fallback for build-time static generation
+  }
+
+  return envSite;
 };
 
-export const SITE_NAME = getHostname();
+// Internal helper for this file
+const SITE_NAME = getSiteName();
+
 /**
  * THE NORMALIZATION HELPER (Strapi v5 compatibility)
  */
@@ -49,7 +59,6 @@ export const getField = (obj: any, fieldName: string) => {
 
 /**
  * UNIVERSAL IMAGE HELPER
- * Optimized for Strapi v5 + Cloudflare R2
  */
 export const getStrapiMedia = (media: any, format: 'small' | 'medium' | 'thumbnail' | 'large' | 'original' = 'original') => {
   if (!media) return null;
@@ -61,29 +70,24 @@ export const getStrapiMedia = (media: any, format: 'small' | 'medium' | 'thumbna
   const data = item.attributes ? item.attributes : item;
   let url = data.url;
 
-  // Try to find the requested format
   if (format !== 'original' && data.formats && data.formats[format]) {
     url = data.formats[format].url;
   }
 
   if (!url) return null;
 
-  // FIX FOR THE "undefined/" BUG
   if (url.includes('undefined/')) {
     const fileName = url.split('undefined/')[1];
     return `${R2_PUBLIC_URL}/${fileName}`;
   }
 
-  // Handle standard absolute URLs (R2/Cloudflare)
   if (url.startsWith('http') || url.startsWith('//')) {
     return url;
   }
 
-  // Handle relative URLs (Local Strapi fallback)
   return `${STRAPI_URL}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
-// Backward compatibility alias if needed
 export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
 
 /**
@@ -94,12 +98,10 @@ export const BRANDS = {
     id: "tours",
     name: "Gheralta Tours",
     docId: "zvmy0su5bbhsy9li5uipyzv9",
-    // PALETTE: Burnt Clay (The Original)
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
     buttonHover: "hover:bg-[#9a3412]",
-    // VIBE: Friendly & Established
     radius: "rounded-[2rem]", 
     cardStyle: "shadow-sm border-stone-100",
     description: "Expert-led cultural and historical journeys.",
@@ -115,13 +117,11 @@ export const BRANDS = {
     id: "adventures",
     name: "Gheralta Adventures",
     docId: "gas2cz781h3wylgc5s4sqm4w",
-    // PALETTE: Wild Olive (Nature & Energy) - Distinct from Tours
     accent: "text-[#65a30d]",
     bgAccent: "bg-[#65a30d]",
     borderAccent: "border-[#65a30d]",
     buttonHover: "hover:bg-[#4d7c0f]",
-    // VIBE: Rugged, Modern, Tactical
-    radius: "rounded-xl", // Tighter, more modern corners
+    radius: "rounded-xl",
     cardStyle: "shadow-md shadow-stone-200 border-stone-200",
     description: "High-octane rock climbing and trekking.",
     email: "bookings@gheraltaadventures.com",
@@ -136,12 +136,10 @@ export const BRANDS = {
     id: "abuneyemata",
     name: "Abune Yemata",
     docId: "j39unsf7fqpb8q1o0eh7w9lp",
-    // PALETTE: Sacred Stone (Heritage & Spirit)
-    accent: "text-[#44403c]", // Stone-700
+    accent: "text-[#44403c]",
     bgAccent: "bg-[#44403c]",
     borderAccent: "border-[#44403c]",
     buttonHover: "hover:bg-[#292524]",
-    // VIBE: Ancient & Organic (Asymmetric Arch shapes)
     radius: "rounded-tl-[3rem] rounded-br-[3rem] rounded-tr-none rounded-bl-none", 
     cardStyle: "shadow-inner bg-stone-50 border-none",
     description: "Pilgrimages and spiritual journeys.",
@@ -156,7 +154,8 @@ export const BRANDS = {
 };
 
 export const getBrand = () => {
-  const match = Object.keys(BRANDS).find(key => key === SITE_NAME);
+  const currentSite = getSiteName();
+  const match = Object.keys(BRANDS).find(key => key === currentSite);
   const brand = match ? BRANDS[match as keyof typeof BRANDS] : BRANDS["gheraltatours.com"];
   
   return {
@@ -174,6 +173,7 @@ export const getBrand = () => {
  * CONTACT_INFO (Dynamic & Relation-Aware)
  */
 export async function getDynamicContact() {
+  const currentSite = getSiteName();
   try {
     const res = await fetch(`${STRAPI_URL}/api/contact-infos?populate=domain`, { 
       next: { revalidate: 3600 },
@@ -183,18 +183,17 @@ export async function getDynamicContact() {
     if (!res.ok) throw new Error("Fetch failed");
     const json = await res.json();
     
-    // MATCHING LOGIC: Target c.domain.name based on your actual JSON output
     const myContact = json.data?.find((c: any) => {
       const domainName = c.domain?.name; 
-      return domainName?.toLowerCase() === SITE_NAME.toLowerCase();
+      return domainName?.toLowerCase() === currentSite;
     });
 
     if (!myContact) {
-      console.warn(`No match for ${SITE_NAME}. Check if domain name matches exactly.`);
+      console.warn(`No match for ${currentSite}. Falling back.`);
       return {
         phone: "+251 928714272",
         whatsapp: "https://wa.me/251928714272",
-        email: SITE_NAME === "abuneyemata.com" ? "hello@abuneyemata.com" : "info@gheraltatours.com",
+        email: currentSite === "abuneyemata.com" ? "hello@abuneyemata.com" : "info@gheraltatours.com",
         address: "Hawzen, Tigray, Ethiopia",
       };
     }
@@ -203,12 +202,10 @@ export async function getDynamicContact() {
       phone: myContact.Phone,
       whatsapp: `https://wa.me/${myContact.Phone?.replace(/\D/g, '')}`,
       email: myContact.Email,
-      // Pass the raw Blocks array; the Page component handles the string conversion
       address: myContact.Office_Address,
       maps: myContact.Maps_Link
     };
   } catch (error) {
-    console.error("Critical Contact Fetch Error:", error);
     return {
       phone: "+251 928714272",
       whatsapp: "https://wa.me/251928714272",
