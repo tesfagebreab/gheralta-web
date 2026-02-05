@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getBrand, getDynamicContact, getSiteName, STRAPI_URL, getStrapiMedia } from '@/lib/constants';
+import { getBrand, getDynamicContact, SITE_NAME, STRAPI_URL, getStrapiMedia } from '@/lib/constants';
 
 // Helper to prevent "Objects are not valid as React child" for the address field
 const parseStrapiBlocks = (content: any): string => {
@@ -37,7 +37,7 @@ export default async function Footer() {
     if (domainJson.data && Array.isArray(domainJson.data)) {
       const myDomainData = domainJson.data.find((d: any) => {
         const dName = d.domain || d.name || d.attributes?.domain || d.attributes?.name;
-        return dName?.toLowerCase().includes(getSiteName().toLowerCase());
+        return dName?.toLowerCase().includes(SITE_NAME.toLowerCase());
       });
 
       const rawLogo = myDomainData?.brand_logo || myDomainData?.attributes?.brand_logo;
@@ -61,7 +61,7 @@ export default async function Footer() {
               <div className="relative h-14 w-14 md:h-16 md:w-16">
                 <Image 
                   src={logoUrl} 
-                  alt={getSiteName()} 
+                  alt={SITE_NAME} 
                   fill 
                   className="object-contain" 
                   unoptimized
@@ -138,7 +138,7 @@ export default async function Footer() {
       
       <div className="max-w-7xl mx-auto px-8 mt-16 md:mt-20 pt-8 border-t border-stone-800 text-center flex flex-col items-center gap-4">
         <p className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] md:tracking-[0.4em] text-stone-600 font-bold">
-          © {new Date().getFullYear()} {getSiteName()}. All Rights Reserved.
+          © {new Date().getFullYear()} {SITE_NAME}. All Rights Reserved.
         </p>
       </div>
     </footer>

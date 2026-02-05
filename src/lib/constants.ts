@@ -1,42 +1,44 @@
 // src/lib/constants.ts
-import { headers } from 'next/headers'; // Added for production domain detection
 
-export const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+/**
+ * STRAPI_URL Sanitizer
+ * Ensures the URL always has https:// even if the environment variable is missing it.
+ */
+const getStrapiURL = () => {
+  const url = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+  // If it's a local address or already has a protocol, return as is
+  if (url.includes("localhost") || url.includes("127.0.0.1") || url.startsWith("http")) {
+    return url;
+  }
+  // Otherwise, force https (Fix for Railway ERR_INVALID_URL)
+  return `https://${url}`;
+};
+
+export const STRAPI_URL = getStrapiURL();
 export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.dev";
 
 /**
- * SITE_NAME logic: Dynamic detection for multi-domain production.
+ * SITE_NAME logic: Detects the domain to apply brand-specific styling.
  */
-export const getSiteName = () => {
-  const envSite = (process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME || "gheraltatours.com").toLowerCase();
+const getHostname = () => {
+  const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
   
-  // 1. Client-Side (Browser)
+  if (process.env.NODE_ENV === 'development' && envSite) {
+    return envSite.toLowerCase();
+  }
+
   if (typeof window !== "undefined") {
     const host = window.location.hostname.replace("www.", "").toLowerCase();
-    // Use the actual domain if it's not a local or internal railway URL
-    if (host !== "localhost" && host !== "127.0.0.1" && !host.includes("railway.app")) {
-      return host;
+    if (host === "localhost" || host === "127.0.0.1") {
+       return (envSite || "gheraltatours.com").toLowerCase();
     }
-    return envSite;
+    return host;
   }
-
-  // 2. Server-Side (Production Request)
-  try {
-    const headerList = headers();
-    const host = headerList.get('host')?.replace("www.", "").toLowerCase();
-    
-    if (host && !host.includes("localhost") && !host.includes("railway.app")) {
-      return host;
-    }
-  } catch (e) {
-    // Fallback for build-time static generation
-  }
-
-  return envSite;
+  
+  return (envSite || "gheraltatours.com").toLowerCase();
 };
 
-// Internal helper for this file
-const SITE_NAME = getSiteName();
+export const SITE_NAME = getHostname();
 
 /**
  * THE NORMALIZATION HELPER (Strapi v5 compatibility)
@@ -97,13 +99,11 @@ export const BRANDS = {
   "gheraltatours.com": {
     id: "tours",
     name: "Gheralta Tours",
-    docId: "zvmy0su5bbhsy9li5uipyzv9",
+    docId: "zvmy0su5bbhsy9li5uipyzv9", 
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
     buttonHover: "hover:bg-[#9a3412]",
-    radius: "rounded-[2rem]", 
-    cardStyle: "shadow-sm border-stone-100",
     description: "Expert-led cultural and historical journeys.",
     email: "info@gheraltatours.com",
     nav: [
@@ -117,16 +117,14 @@ export const BRANDS = {
     id: "adventures",
     name: "Gheralta Adventures",
     docId: "gas2cz781h3wylgc5s4sqm4w",
-    accent: "text-[#65a30d]",
-    bgAccent: "bg-[#65a30d]",
-    borderAccent: "border-[#65a30d]",
-    buttonHover: "hover:bg-[#4d7c0f]",
-    radius: "rounded-xl",
-    cardStyle: "shadow-md shadow-stone-200 border-stone-200",
+    accent: "text-[#c2410c]",
+    bgAccent: "bg-[#c2410c]",
+    borderAccent: "border-[#c2410c]",
+    buttonHover: "hover:bg-[#9a3412]",
     description: "High-octane rock climbing and trekking.",
     email: "bookings@gheraltaadventures.com",
     nav: [
-      { label: "ADVENTURES", href: "/tours" },
+      { label: "TOURS", href: "/tours" },
       { label: "OUR STORY", href: "/about-us" },
       { label: "OUR THINKING", href: "/blog" },
       { label: "CONTACT", href: "/contact" }
@@ -136,12 +134,10 @@ export const BRANDS = {
     id: "abuneyemata",
     name: "Abune Yemata",
     docId: "j39unsf7fqpb8q1o0eh7w9lp",
-    accent: "text-[#44403c]",
-    bgAccent: "bg-[#44403c]",
-    borderAccent: "border-[#44403c]",
-    buttonHover: "hover:bg-[#292524]",
-    radius: "rounded-tl-[3rem] rounded-br-[3rem] rounded-tr-none rounded-bl-none", 
-    cardStyle: "shadow-inner bg-stone-50 border-none",
+    accent: "text-slate-900",
+    bgAccent: "bg-slate-900",
+    borderAccent: "border-slate-900",
+    buttonHover: "hover:bg-slate-800",
     description: "Pilgrimages and spiritual journeys.",
     email: "hello@abuneyemata.com",
     nav: [
@@ -154,8 +150,7 @@ export const BRANDS = {
 };
 
 export const getBrand = () => {
-  const currentSite = getSiteName();
-  const match = Object.keys(BRANDS).find(key => key === currentSite);
+  const match = Object.keys(BRANDS).find(key => key === SITE_NAME);
   const brand = match ? BRANDS[match as keyof typeof BRANDS] : BRANDS["gheraltatours.com"];
   
   return {
@@ -173,27 +168,36 @@ export const getBrand = () => {
  * CONTACT_INFO (Dynamic & Relation-Aware)
  */
 export async function getDynamicContact() {
-  const currentSite = getSiteName();
+  // Guard check to ensure URL is valid before fetching
+  if (!STRAPI_URL || STRAPI_URL.includes('undefined')) {
+    console.error("Fetch skipped: STRAPI_URL is invalid.");
+    return {
+      phone: "+251 928714272",
+      whatsapp: "https://wa.me/251928714272",
+      email: "info@gheraltatours.com",
+      address: "Hawzen, Tigray, Ethiopia",
+    };
+  }
+
   try {
     const res = await fetch(`${STRAPI_URL}/api/contact-infos?populate=domain`, { 
       next: { revalidate: 3600 },
       headers: { 'Content-Type': 'application/json' }
     });
     
-    if (!res.ok) throw new Error("Fetch failed");
+    if (!res.ok) throw new Error(`Fetch failed with status: ${res.status}`);
     const json = await res.json();
     
     const myContact = json.data?.find((c: any) => {
       const domainName = c.domain?.name; 
-      return domainName?.toLowerCase() === currentSite;
+      return domainName?.toLowerCase() === SITE_NAME.toLowerCase();
     });
 
     if (!myContact) {
-      console.warn(`No match for ${currentSite}. Falling back.`);
       return {
         phone: "+251 928714272",
         whatsapp: "https://wa.me/251928714272",
-        email: currentSite === "abuneyemata.com" ? "hello@abuneyemata.com" : "info@gheraltatours.com",
+        email: SITE_NAME === "abuneyemata.com" ? "hello@abuneyemata.com" : "info@gheraltatours.com",
         address: "Hawzen, Tigray, Ethiopia",
       };
     }
@@ -206,6 +210,7 @@ export async function getDynamicContact() {
       maps: myContact.Maps_Link
     };
   } catch (error) {
+    console.error("Dynamic Contact Fetch Error:", error);
     return {
       phone: "+251 928714272",
       whatsapp: "https://wa.me/251928714272",
