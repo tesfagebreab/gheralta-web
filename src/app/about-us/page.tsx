@@ -4,7 +4,7 @@ export const revalidate = 0;
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
+import { STRAPI_URL, getSiteName, getBrand, getField, getStrapiMedia } from "@/lib/constants";
 import TrustBanner from "@/components/TrustBanner";
 
 // --- HELPERS ---
@@ -37,7 +37,7 @@ const parseStrapiList = (content: any): string[] => {
 // --- DYNAMIC SEO ---
 export async function generateMetadata(): Promise<Metadata> {
   try {
-    const res = await fetch(`${STRAPI_URL}/api/about-uses?filters[domain][name][$containsi]=${SITE_NAME}&populate=seo.meta_image`, { 
+    const res = await fetch(`${STRAPI_URL}/api/about-uses?filters[domain][name][$containsi]=${getSiteName()}&populate=seo.meta_image`, { 
       cache: 'no-store'
     });
     const json = await res.json();
@@ -46,14 +46,14 @@ export async function generateMetadata(): Promise<Metadata> {
     const metaImg = getField(seo, 'meta_image');
 
     return {
-      title: getField(seo, 'meta_title') || `Our Story | ${SITE_NAME}`,
-      description: getField(seo, 'meta_description') || `Discover the mission behind ${SITE_NAME}.`,
+      title: getField(seo, 'meta_title') || `Our Story | ${getSiteName()}`,
+      description: getField(seo, 'meta_description') || `Discover the mission behind ${getSiteName()}.`,
       openGraph: {
         images: metaImg ? [getStrapiMedia(metaImg)] : [],
       }
     };
   } catch (error) {
-    return { title: `About Us | ${SITE_NAME}` };
+    return { title: `About Us | ${getSiteName()}` };
   }
 }
 
@@ -67,7 +67,7 @@ export default async function AboutUs({
   
   try {
     const res = await fetch(
-      `${STRAPI_URL}/api/about-uses?filters[domain][name][$containsi]=${SITE_NAME}&populate[0]=trust_banner&populate[1]=trust_banner.trust_badges&populate[2]=trust_banner.partner_logos&populate[3]=trust_banner.founder_image&populate[4]=featured_image&populate[5]=seo`, 
+      `${STRAPI_URL}/api/about-uses?filters[domain][name][$containsi]=${getSiteName()}&populate[0]=trust_banner&populate[1]=trust_banner.trust_badges&populate[2]=trust_banner.partner_logos&populate[3]=trust_banner.founder_image&populate[4]=featured_image&populate[5]=seo`, 
       { cache: 'no-store' }
     );
 
@@ -75,7 +75,7 @@ export default async function AboutUs({
 
     const json = await res.json();
     const data = (json.data && json.data.length > 0) ? json.data[0] : null;
-    if (!data) throw new Error(`No data found for domain: ${SITE_NAME}`);
+    if (!data) throw new Error(`No data found for domain: ${getSiteName()}`);
 
     const pageContent = {
       title: String(getField(data, "hero_title") || "Our Story"),
