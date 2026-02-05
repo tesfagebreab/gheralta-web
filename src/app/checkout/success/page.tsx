@@ -3,7 +3,6 @@ import { getBrand } from "@/lib/domain-helper";
 import SuccessClientHandler from "./SuccessClientHandler"; // We will create this below
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 export default async function SuccessPage() {
   const brand = await getBrand();

@@ -7,9 +7,7 @@ import { notFound } from "next/navigation";
 import { STRAPI_URL, getField, getStrapiMedia } from "@/lib/constants";
 import { getBrand } from "@/lib/domain-helper";
 
-
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 interface Props {
   params: Promise<{ slug: string }>;

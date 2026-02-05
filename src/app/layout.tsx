@@ -10,7 +10,6 @@ import { getBrand, getDynamicContact } from "@/lib/domain-helper";
 
 // Force fresh data on every request for multi-tenant domain switching
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 // Viewport export: maximum-scale=1 and user-scalable=no prevents 
 // "auto-zoom" on input fields in iOS, which can break layout.

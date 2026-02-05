@@ -2,11 +2,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Force Next.js to skip the cache and re-run the logic on every visit
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-
 export default function ContactForm({ brand, initialInterest, inputStyles, siteName }: any) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();

@@ -3,7 +3,6 @@ import { getBrand } from "@/lib/domain-helper";
 
 // These MUST be in a Server Component, never with "use client"
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 export async function generateMetadata() {
   const brand = await getBrand();

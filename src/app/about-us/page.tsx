@@ -8,7 +8,6 @@ import { getBrand } from "@/lib/domain-helper";
 import TrustBanner from "@/components/TrustBanner";
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 // --- HELPERS ---
 

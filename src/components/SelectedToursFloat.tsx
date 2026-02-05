@@ -4,10 +4,6 @@ import { getCart } from "@/lib/cart";
 import Link from "next/link";
 import { getBrand } from "@/lib/domain-helper";
 
-// Force Next.js to skip the cache
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 export default function SelectedToursFloat() {
   const [count, setCount] = useState(0);
   const [ids, setIds] = useState<string[]>([]);

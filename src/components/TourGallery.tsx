@@ -5,10 +5,6 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { getBrand } from "@/lib/domain-helper";
 
-// Force Next.js to skip the cache and re-run the logic on every visit
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 interface GalleryProps {
   images: Array<{
     url: string;

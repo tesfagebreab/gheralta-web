@@ -7,7 +7,6 @@ import ContactForm from "@/components/ContactForm";
 import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 // --- HELPERS ---
 

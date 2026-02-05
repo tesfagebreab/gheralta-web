@@ -7,10 +7,6 @@ import { STRAPI_URL, getStrapiMedia } from "@/lib/constants";
 import { getBrand } from "@/lib/domain-helper";
 import { useState, useEffect } from 'react';
 
-// Force Next.js to skip the cache
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 export default function Navbar() {
   const [brand, setBrand] = useState<any>(null);
   const pathname = usePathname();
