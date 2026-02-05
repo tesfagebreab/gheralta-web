@@ -1,16 +1,14 @@
 // src/lib/constants.ts
+import { headers } from 'next/headers';
 
 /**
  * STRAPI_URL Sanitizer
- * Ensures the URL always has https:// even if the environment variable is missing it.
  */
 const getStrapiURL = () => {
   const url = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
-  // If it's a local address or already has a protocol, return as is
   if (url.includes("localhost") || url.includes("127.0.0.1") || url.startsWith("http")) {
     return url;
   }
-  // Otherwise, force https (Fix for Railway ERR_INVALID_URL)
   return `https://${url}`;
 };
 
@@ -19,22 +17,31 @@ export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.de
 
 /**
  * SITE_NAME logic: Detects the domain to apply brand-specific styling.
+ * Updated to handle server-side headers for multi-domain Railway support.
  */
 const getHostname = () => {
-  const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
-  
-  if (process.env.NODE_ENV === 'development' && envSite) {
-    return envSite.toLowerCase();
-  }
-
+  // 1. Client-side detection
   if (typeof window !== "undefined") {
     const host = window.location.hostname.replace("www.", "").toLowerCase();
-    if (host === "localhost" || host === "127.0.0.1") {
-       return (envSite || "gheraltatours.com").toLowerCase();
+    if (host !== "localhost" && host !== "127.0.0.1") {
+      return host;
     }
-    return host;
   }
-  
+
+  // 2. Server-side detection (Crucial for Railway)
+  try {
+    const headerList = headers();
+    // Use a try-catch because headers() can only be called in server components/actions
+    const host = (headerList as any).get('host')?.replace("www.", "").toLowerCase();
+    if (host && !host.includes('localhost') && !host.includes('internal')) {
+      return host;
+    }
+  } catch (e) {
+    // Fallback if called outside of a request context
+  }
+
+  // 3. Fallback to Env Variable
+  const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
   return (envSite || "gheraltatours.com").toLowerCase();
 };
 
@@ -94,12 +101,12 @@ export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
 
 /**
  * BRAND ATTRIBUTES
+ * Removed docId to prevent 404s caused by environment mismatches.
  */
 export const BRANDS = {
   "gheraltatours.com": {
     id: "tours",
     name: "Gheralta Tours",
-    docId: "zvmy0su5bbhsy9li5uipyzv9", 
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -116,7 +123,6 @@ export const BRANDS = {
   "gheraltaadventures.com": {
     id: "adventures",
     name: "Gheralta Adventures",
-    docId: "gas2cz781h3wylgc5s4sqm4w",
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -133,7 +139,6 @@ export const BRANDS = {
   "abuneyemata.com": {
     id: "abuneyemata",
     name: "Abune Yemata",
-    docId: "j39unsf7fqpb8q1o0eh7w9lp",
     accent: "text-slate-900",
     bgAccent: "bg-slate-900",
     borderAccent: "border-slate-900",
@@ -168,9 +173,7 @@ export const getBrand = () => {
  * CONTACT_INFO (Dynamic & Relation-Aware)
  */
 export async function getDynamicContact() {
-  // Guard check to ensure URL is valid before fetching
   if (!STRAPI_URL || STRAPI_URL.includes('undefined')) {
-    console.error("Fetch skipped: STRAPI_URL is invalid.");
     return {
       phone: "+251 928714272",
       whatsapp: "https://wa.me/251928714272",
@@ -180,8 +183,9 @@ export async function getDynamicContact() {
   }
 
   try {
+    // Added no-store to ensure the brand switch works immediately on Railway
     const res = await fetch(`${STRAPI_URL}/api/contact-infos?populate=domain`, { 
-      next: { revalidate: 3600 },
+      cache: 'no-store',
       headers: { 'Content-Type': 'application/json' }
     });
     
@@ -189,7 +193,8 @@ export async function getDynamicContact() {
     const json = await res.json();
     
     const myContact = json.data?.find((c: any) => {
-      const domainName = c.domain?.name; 
+      // Use the name for matching instead of ID
+      const domainName = c.domain?.name || c.attributes?.domain?.data?.attributes?.name; 
       return domainName?.toLowerCase() === SITE_NAME.toLowerCase();
     });
 
@@ -210,7 +215,6 @@ export async function getDynamicContact() {
       maps: myContact.Maps_Link
     };
   } catch (error) {
-    console.error("Dynamic Contact Fetch Error:", error);
     return {
       phone: "+251 928714272",
       whatsapp: "https://wa.me/251928714272",
