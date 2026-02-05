@@ -1,25 +1,32 @@
 // src/lib/constants.ts
 
-const rawStrapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
-// Sanitize: If it doesn't start with http, and it's not empty, add https://
-export const STRAPI_URL = rawStrapiUrl.startsWith('http') 
-  ? rawStrapiUrl 
-  : `https://${rawStrapiUrl}`;
+/**
+ * STRAPI_URL Sanitizer
+ * Ensures the URL always has https:// even if the environment variable is missing it.
+ */
+const getStrapiURL = () => {
+  const url = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+  // If it's a local address or already has a protocol, return as is
+  if (url.includes("localhost") || url.includes("127.0.0.1") || url.startsWith("http")) {
+    return url;
+  }
+  // Otherwise, force https (Fix for Railway ERR_INVALID_URL)
+  return `https://${url}`;
+};
+
+export const STRAPI_URL = getStrapiURL();
 export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.dev";
 
 /**
  * SITE_NAME logic: Detects the domain to apply brand-specific styling.
  */
 const getHostname = () => {
-  // 1. Check for the Environment Variable FIRST (for local testing via PowerShell)
   const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
   
-  // If we are in development and have an env variable set, use it!
   if (process.env.NODE_ENV === 'development' && envSite) {
     return envSite.toLowerCase();
   }
 
-  // 2. Fallback to Browser Detection for Production/Live
   if (typeof window !== "undefined") {
     const host = window.location.hostname.replace("www.", "").toLowerCase();
     if (host === "localhost" || host === "127.0.0.1") {
@@ -32,6 +39,7 @@ const getHostname = () => {
 };
 
 export const SITE_NAME = getHostname();
+
 /**
  * THE NORMALIZATION HELPER (Strapi v5 compatibility)
  */
@@ -53,7 +61,6 @@ export const getField = (obj: any, fieldName: string) => {
 
 /**
  * UNIVERSAL IMAGE HELPER
- * Optimized for Strapi v5 + Cloudflare R2
  */
 export const getStrapiMedia = (media: any, format: 'small' | 'medium' | 'thumbnail' | 'large' | 'original' = 'original') => {
   if (!media) return null;
@@ -65,29 +72,24 @@ export const getStrapiMedia = (media: any, format: 'small' | 'medium' | 'thumbna
   const data = item.attributes ? item.attributes : item;
   let url = data.url;
 
-  // Try to find the requested format
   if (format !== 'original' && data.formats && data.formats[format]) {
     url = data.formats[format].url;
   }
 
   if (!url) return null;
 
-  // FIX FOR THE "undefined/" BUG
   if (url.includes('undefined/')) {
     const fileName = url.split('undefined/')[1];
     return `${R2_PUBLIC_URL}/${fileName}`;
   }
 
-  // Handle standard absolute URLs (R2/Cloudflare)
   if (url.startsWith('http') || url.startsWith('//')) {
     return url;
   }
 
-  // Handle relative URLs (Local Strapi fallback)
   return `${STRAPI_URL}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
-// Backward compatibility alias if needed
 export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
 
 /**
@@ -166,23 +168,32 @@ export const getBrand = () => {
  * CONTACT_INFO (Dynamic & Relation-Aware)
  */
 export async function getDynamicContact() {
+  // Guard check to ensure URL is valid before fetching
+  if (!STRAPI_URL || STRAPI_URL.includes('undefined')) {
+    console.error("Fetch skipped: STRAPI_URL is invalid.");
+    return {
+      phone: "+251 928714272",
+      whatsapp: "https://wa.me/251928714272",
+      email: "info@gheraltatours.com",
+      address: "Hawzen, Tigray, Ethiopia",
+    };
+  }
+
   try {
     const res = await fetch(`${STRAPI_URL}/api/contact-infos?populate=domain`, { 
       next: { revalidate: 3600 },
       headers: { 'Content-Type': 'application/json' }
     });
     
-    if (!res.ok) throw new Error("Fetch failed");
+    if (!res.ok) throw new Error(`Fetch failed with status: ${res.status}`);
     const json = await res.json();
     
-    // MATCHING LOGIC: Target c.domain.name based on your actual JSON output
     const myContact = json.data?.find((c: any) => {
       const domainName = c.domain?.name; 
       return domainName?.toLowerCase() === SITE_NAME.toLowerCase();
     });
 
     if (!myContact) {
-      console.warn(`No match for ${SITE_NAME}. Check if domain name matches exactly.`);
       return {
         phone: "+251 928714272",
         whatsapp: "https://wa.me/251928714272",
@@ -195,12 +206,11 @@ export async function getDynamicContact() {
       phone: myContact.Phone,
       whatsapp: `https://wa.me/${myContact.Phone?.replace(/\D/g, '')}`,
       email: myContact.Email,
-      // Pass the raw Blocks array; the Page component handles the string conversion
       address: myContact.Office_Address,
       maps: myContact.Maps_Link
     };
   } catch (error) {
-    console.error("Critical Contact Fetch Error:", error);
+    console.error("Dynamic Contact Fetch Error:", error);
     return {
       phone: "+251 928714272",
       whatsapp: "https://wa.me/251928714272",
