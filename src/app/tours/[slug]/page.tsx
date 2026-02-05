@@ -2,6 +2,9 @@ import { Metadata } from "next";
 import TourDetail from "./TourClient";
 import { STRAPI_URL, SITE_NAME, getStrapiMedia } from "@/lib/constants";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 type Props = {
   params: Promise<{ slug: string }>;
 };

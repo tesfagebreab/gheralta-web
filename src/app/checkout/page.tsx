@@ -7,6 +7,9 @@ import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
 import { clearCart, getCart, removeFromCart } from "@/lib/cart";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();

@@ -2,6 +2,10 @@
 import Link from "next/link";
 import { getBrand, SITE_NAME } from "@/lib/constants";
 
+// Force Next.js to skip the cache and re-run the logic on every visit
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function NotFound() {
   const brand = getBrand();
 

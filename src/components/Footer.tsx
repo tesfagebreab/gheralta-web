@@ -2,6 +2,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getBrand, getDynamicContact, SITE_NAME, STRAPI_URL, getStrapiMedia } from '@/lib/constants';
 
+// Force Next.js to skip the cache and re-run the logic on every visit
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+
 // Helper to prevent "Objects are not valid as React child" for the address field
 const parseStrapiBlocks = (content: any): string => {
   if (!content) return "";

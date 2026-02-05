@@ -3,6 +3,9 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { SITE_NAME, getBrand } from "@/lib/constants";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function CancelPage() {
   const brand = getBrand();
 

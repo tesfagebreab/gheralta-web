@@ -6,6 +6,11 @@ import { usePathname } from 'next/navigation';
 import { STRAPI_URL, SITE_NAME, getBrand, getStrapiMedia } from '@/lib/constants';
 import { useState, useEffect } from 'react';
 
+// Force Next.js to skip the cache and re-run the logic on every visit
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+
 export default function Navbar() {
   const brand = getBrand();
   const pathname = usePathname();

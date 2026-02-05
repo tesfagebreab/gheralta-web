@@ -1,5 +1,8 @@
 import { STRAPI_URL, SITE_NAME } from '@/lib/constants';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function DebugPage() {
   let allData = null;
   let error = null;

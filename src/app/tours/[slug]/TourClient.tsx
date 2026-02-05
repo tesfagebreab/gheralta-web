@@ -9,6 +9,9 @@ import { Clock, Mountain, Map, MapPin, CheckCircle, Briefcase, Calendar } from "
 import React from 'react';
 import TourGallery from "@/components/TourGallery"; 
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // --- HELPERS ---
 
 /**
