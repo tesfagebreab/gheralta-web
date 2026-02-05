@@ -1,13 +1,17 @@
 "use client";
 import Link from "next/link";
-import { getBrand, SITE_NAME } from "@/lib/constants";
+//import { getBrand, SITE_NAME } from "@/lib/constants";
+
+import { getBrand } from "@/lib/domain-helper";
+
 
 // Force Next.js to skip the cache and re-run the logic on every visit
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default function NotFound() {
-  const brand = getBrand();
+export default async function NotFound() {
+  const brand = await getBrand();
+  const SITE_NAME = brand.domain;
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen md:min-h-[70vh] px-6 text-center font-sans relative overflow-hidden">

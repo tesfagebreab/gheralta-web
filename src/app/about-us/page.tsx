@@ -1,7 +1,10 @@
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
+// 1. Updated Imports
+import { STRAPI_URL, getField, getStrapiMedia } from "@/lib/constants";
+import { getBrand } from "@/lib/domain-helper";
+
 import TrustBanner from "@/components/TrustBanner";
 
 export const dynamic = 'force-dynamic';
@@ -36,6 +39,10 @@ const parseStrapiList = (content: any): string[] => {
 
 // --- DYNAMIC SEO ---
 export async function generateMetadata(): Promise<Metadata> {
+
+  const brand = await getBrand();
+  const SITE_NAME = brand.domain;
+
   try {
     const res = await fetch(`${STRAPI_URL}/api/about-uses?filters[domain][name][$containsi]=${SITE_NAME}&populate=seo.meta_image`, { 
       cache: 'no-store'
@@ -63,7 +70,8 @@ export default async function AboutUs({
     searchParams: Promise<{ inquiry?: string }> 
   }) {
   await searchParams;
-  const brand = getBrand();
+  const brand = await getBrand();
+  const SITE_NAME = brand.domain;
   
   try {
     const res = await fetch(

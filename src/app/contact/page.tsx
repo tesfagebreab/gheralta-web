@@ -1,5 +1,8 @@
 import { Metadata } from "next";
-import { STRAPI_URL, getBrand, getDynamicContact, SITE_NAME, getField, getStrapiMedia } from "@/lib/constants";
+
+import { STRAPI_URL, getField, getStrapiMedia } from "@/lib/constants";
+import { getBrand, getDynamicContact } from "@/lib/domain-helper";
+
 import ContactForm from "@/components/ContactForm";
 import Link from "next/link";
 
@@ -27,6 +30,10 @@ const parseStrapiBlocks = (content: any): string => {
 
 // --- DYNAMIC SEO ---
 export async function generateMetadata(): Promise<Metadata> {
+  
+  const brand = await getBrand();
+  const SITE_NAME = brand.domain;
+
   try {
     // Using containsi for flexible domain matching in Strapi v5
     const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$containsi]=${SITE_NAME}&populate=seo.meta_image`, { 
@@ -55,8 +62,8 @@ export default async function ContactPage({
 }: { 
   searchParams: Promise<{ inquiry?: string }> 
 }) {
-  const brand = getBrand();
-  
+const brand = await getBrand();
+  const SITE_NAME = brand.domain;  
   try {
     // Next.js 15 requires awaiting searchParams
     const resolvedParams = await searchParams;

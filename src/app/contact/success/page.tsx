@@ -1,9 +1,11 @@
 import Link from 'next/link';
-import { getBrand } from '@/lib/constants';
 
-export default function ContactSuccessPage() {
-  const brand = getBrand();
+import { getBrand } from "@/lib/domain-helper";
 
+export default async function ContactSuccessPage() {
+  const brand = await getBrand();
+    const SITE_NAME = brand.domain;
+  
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#fafaf9] px-6">
       <div className="max-w-md w-full text-center space-y-8 bg-white p-12 rounded-[3rem] shadow-xl border border-stone-100 animate-fade-in">

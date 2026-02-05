@@ -1,23 +1,26 @@
 "use client";
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useEffect, Suspense } from 'react';
-import Link from 'next/link';
-import Image from 'next/image'; 
-import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
-import { clearCart, getCart, removeFromCart } from "@/lib/cart";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense, use } from 'react';
+import Link from 'next/link';
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+
+import { STRAPI_URL, getField, getStrapiMedia } from "@/lib/constants";
+import { getBrand } from "@/lib/domain-helper";
+import { clearCart, getCart, removeFromCart } from "@/lib/cart";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const tourIdParam = searchParams.get('tourId'); 
-  const brand = getBrand();
+  
+  // Brand Configuration - Using 'use' to unwrap the brand promise/object correctly
+  const brand = use(getBrand());
+  const SITE_NAME = brand.domain;
+
+  // State Management
+  const [tourIdParam, setTourIdParam] = useState<string | null>(null);
   const [tours, setTours] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -26,16 +29,19 @@ function CheckoutContent() {
   });
   const [errors, setErrors] = useState<any>({});
 
-  // Sync URL with LocalStorage if URL is empty
+  // 1. Handle SearchParams Await-like behavior in Client Component
   useEffect(() => {
-    if (!tourIdParam) {
+    const tourId = searchParams.get('tourId');
+    if (!tourId) {
       const cartIds = getCart();
       if (cartIds.length > 0) {
         router.replace(`/checkout?tourId=${cartIds.join(',')}`);
       }
     }
-  }, [tourIdParam, router]);
+    setTourIdParam(tourId);
+  }, [searchParams, router]);
 
+  // 2. Set Page Metadata
   useEffect(() => {
     document.title = `Secure Checkout | ${SITE_NAME}`;
     const meta = document.createElement('meta');
@@ -45,10 +51,11 @@ function CheckoutContent() {
 
     return () => {
       const head = document.getElementsByTagName('head')[0];
-      if (head.contains(meta)) head.removeChild(meta);
+      if (head && head.contains(meta)) head.removeChild(meta);
     };
-  }, []);
+  }, [SITE_NAME]);
 
+  // 3. Fetch Tour Data
   useEffect(() => {
     async function fetchTours() {
       if (!tourIdParam) {
@@ -124,7 +131,7 @@ function CheckoutContent() {
     if (!formData.agreedToTerms) newErrors.agreedToTerms = "Accept policies";
     if (tours.some(t => !t.selectedDate)) newErrors.dates = "Select dates for all tours";
     setErrors(newErrors);
-    // ADD THIS: Feedback for the user
+    
     if (Object.keys(newErrors).length > 0) {
       alert("Please complete all required fields and accept the Booking Terms to proceed to payment.");
     }
@@ -132,7 +139,11 @@ function CheckoutContent() {
     return Object.keys(newErrors).length === 0;
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center font-bold text-stone-400 uppercase text-[10px] tracking-widest text-center">Initialising Checkout...</div>;
+  if (loading) return (
+    <div className="h-screen flex items-center justify-center font-bold text-stone-400 uppercase text-[10px] tracking-widest text-center">
+      Initialising Checkout...
+    </div>
+  );
 
   if (tours.length === 0) {
     return (
@@ -287,24 +298,24 @@ function CheckoutContent() {
 
                   <div className="pt-6 border-t border-stone-50">
                     <label className="flex items-start gap-3 cursor-pointer mb-6 group">
-  <input 
-    type="checkbox" 
-    checked={formData.agreedToTerms} 
-    onChange={(e) => setFormData({...formData, agreedToTerms: e.target.checked})} 
-    className="mt-1 w-4 h-4 rounded border-stone-300 accent-[#c2410c] cursor-pointer" 
-  />
-  <p className="text-[10px] font-bold text-stone-500 uppercase leading-relaxed italic">
-    I accept the {' '}
-    <Link 
-      href="/booking-terms" 
-      target="_blank" 
-      rel="noopener noreferrer"
-      className="text-[#c2410c] underline decoration-stone-300 underline-offset-2 hover:text-[#9a3412] transition-colors"
-    >
-      Booking Terms and Conditions
-    </Link>.
-  </p>
-</label>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.agreedToTerms} 
+                        onChange={(e) => setFormData({...formData, agreedToTerms: e.target.checked})} 
+                        className="mt-1 w-4 h-4 rounded border-stone-300 accent-[#c2410c] cursor-pointer" 
+                      />
+                      <p className="text-[10px] font-bold text-stone-500 uppercase leading-relaxed italic">
+                        I accept the {' '}
+                        <Link 
+                          href="/booking-terms" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-[#c2410c] underline decoration-stone-300 underline-offset-2 hover:text-[#9a3412] transition-colors"
+                        >
+                          Booking Terms and Conditions
+                        </Link>.
+                      </p>
+                    </label>
 
                     <div className="relative z-10">
                       {(!formData.agreedToTerms || !formData.fullName || tours.some(t => !t.selectedDate)) ? (

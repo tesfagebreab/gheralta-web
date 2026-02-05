@@ -1,4 +1,6 @@
-import { STRAPI_URL, SITE_NAME } from '@/lib/constants';
+import { STRAPI_URL } from "@/lib/constants";
+import { getBrand } from "@/lib/domain-helper";
+
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -6,6 +8,9 @@ export const revalidate = 0;
 export default async function DebugPage() {
   let allData = null;
   let error = null;
+
+  const brand = await getBrand();
+  const SITE_NAME = brand.domain;
   // We remove the filter from the URL to stop the 400 error
   const apiUrl = `${STRAPI_URL}/api/domains?populate=*`;
 

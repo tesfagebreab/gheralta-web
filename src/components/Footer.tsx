@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getBrand, getDynamicContact, SITE_NAME, STRAPI_URL, getStrapiMedia } from '@/lib/constants';
+
+import { STRAPI_URL, getField, getStrapiMedia } from "@/lib/constants";
+import { getBrand, getDynamicContact } from "@/lib/domain-helper";
 
 // Force Next.js to skip the cache and re-run the logic on every visit
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
 
 // Helper to prevent "Objects are not valid as React child" for the address field
 const parseStrapiBlocks = (content: any): string => {
@@ -23,7 +24,8 @@ const parseStrapiBlocks = (content: any): string => {
 };
 
 export default async function Footer() {
-  const brand = getBrand();
+  const brand = await getBrand();
+  const SITE_NAME = brand.domain;
   
   let contact = { phone: "", address: "", whatsapp: "" };
   let logoUrl: string | null = null;
@@ -31,7 +33,7 @@ export default async function Footer() {
   try {
     const [contactData, domainRes] = await Promise.all([
       getDynamicContact(),
-      fetch(`${STRAPI_URL}/api/domains?populate=*`, { 
+      fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${SITE_NAME}&populate=*`, { 
         cache: 'no-store' 
       })
     ]);
@@ -39,12 +41,8 @@ export default async function Footer() {
     contact = contactData;
     const domainJson = await domainRes.json();
     
-    if (domainJson.data && Array.isArray(domainJson.data)) {
-      const myDomainData = domainJson.data.find((d: any) => {
-        const dName = d.domain || d.name || d.attributes?.domain || d.attributes?.name;
-        return dName?.toLowerCase().includes(SITE_NAME.toLowerCase());
-      });
-
+    if (domainJson.data && domainJson.data.length > 0) {
+      const myDomainData = domainJson.data[0];
       const rawLogo = myDomainData?.brand_logo || myDomainData?.attributes?.brand_logo;
 
       if (rawLogo) {
@@ -73,13 +71,16 @@ export default async function Footer() {
                 />
               </div>
             ) : (
-              <div className="h-14 w-14 md:h-16 md:w-16 rounded-full border border-stone-800 flex items-center justify-center font-black italic text-[#c2410c] text-xl">
+              <div 
+                className="h-14 w-14 md:h-16 md:w-16 rounded-full border border-stone-800 flex items-center justify-center font-black italic text-xl"
+                style={{ color: brand.colors.primary }}
+              >
                 {brand.name.charAt(0)}
               </div>
             )}
             <h2 className="text-2xl md:text-3xl font-sans font-black italic uppercase tracking-tighter mt-2 md:mt-0">
                {brand.name.split(' ')[0]} 
-               <span className="text-[#c2410c]"> {brand.name.split(' ').slice(1).join(' ')}</span>
+               <span style={{ color: brand.colors.primary }}> {brand.name.split(' ').slice(1).join(' ')}</span>
             </h2>
           </div>
           <p className="text-stone-400 text-sm leading-relaxed max-w-sm font-medium">
@@ -96,14 +97,16 @@ export default async function Footer() {
               <li key={link.href}>
                 <Link 
                   href={link.href} 
-                  className="text-sm font-bold transition-colors hover:text-[#c2410c] text-stone-300"
+                  className="text-sm font-bold transition-colors text-stone-300"
+                  style={{ transition: 'color 0.3s' }}
+                  // Using a simple hover style approach for server component
                 >
                   {link.label}
                 </Link>
               </li>
             ))}
             <li>
-              <Link href="/booking-terms" className="text-sm font-bold transition-colors hover:text-[#c2410c] text-stone-300">
+              <Link href="/booking-terms" className="text-sm font-bold transition-colors text-stone-300">
                 BOOKING TERMS
               </Link>
             </li>
@@ -115,15 +118,15 @@ export default async function Footer() {
           <h3 className="text-xs font-black uppercase tracking-[0.3em] text-stone-500 mb-6">Base Camp</h3>
           <ul className="space-y-4 text-stone-300 text-sm font-medium">
             <li className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-3">
-              <span className="text-[#c2410c]">📍</span> 
+              <span style={{ color: brand.colors.primary }}>📍</span> 
               <span>{parseStrapiBlocks(contact.address)}</span>
             </li>
             <li className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-3">
-              <span className="text-[#c2410c]">📞</span> 
+              <span style={{ color: brand.colors.primary }}>📞</span> 
               <a href={`tel:${contact.phone}`} className="hover:underline">{contact.phone}</a>
             </li>
             <li className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-3">
-              <span className="text-[#c2410c]">✉️</span> 
+              <span style={{ color: brand.colors.primary }}>✉️</span> 
               <a href={`mailto:${brand.email}`} className="hover:underline break-all">{brand.email}</a>
             </li>
             <li className="flex flex-col items-center md:items-start gap-3 mt-6">

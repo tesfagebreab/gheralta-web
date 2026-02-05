@@ -1,20 +1,20 @@
 "use client";
-import Link from "next/link";
-import { useEffect } from "react";
-import { SITE_NAME, getBrand } from "@/lib/constants";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+import Link from "next/link";
+import { useEffect, use } from "react";
+import { getBrand } from "@/lib/domain-helper";
 
 export default function CancelPage() {
-  const brand = getBrand();
+  // Use the 'use' hook to unwrap the brand data and resolve the red underline
+  const brand = use(getBrand());
+  const SITE_NAME = brand.domain;
 
   useEffect(() => {
     document.title = `Booking Cancelled | ${SITE_NAME}`;
-  }, []);
+  }, [SITE_NAME]);
 
   return (
-    <main className="min-h-[80vh] flex items-center justify-center p-8">
+    <main className="min-h-[80vh] flex items-center justify-center p-8 font-sans">
       <div className="max-w-md w-full text-center space-y-8">
         
         {/* Cancel/Warning Icon */}
@@ -39,6 +39,7 @@ export default function CancelPage() {
             <a 
               href="https://wa.me/251928714272" 
               target="_blank" 
+              rel="noopener noreferrer"
               className="flex items-center gap-3 text-xs font-bold text-slate-700 hover:text-green-600 transition-colors"
             >
               <span className={brand.accent}>→</span> Chat with a local expert on WhatsApp
@@ -53,22 +54,22 @@ export default function CancelPage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <Link href="/" className="block">
-            <button className={`${brand.bgAccent} w-full text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg hover:opacity-90 transition-all`}>
+          <Link href="/tours" className="block">
+            <button className={`${brand.bgAccent} w-full text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg hover:opacity-90 transition-all cursor-pointer`}>
               Back to Tours
             </button>
           </Link>
           
           <button 
             onClick={() => window.history.back()} 
-            className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors"
+            className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
           >
             ← Try Checkout Again
           </button>
         </div>
         
         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-          Secure Multi-Brand Architecture by {brand.name} {brand.name === 'Abune' ? 'Yemata' : SITE_NAME.includes('Tours') ? 'Tours' : 'Adventures'}
+          Secure Multi-Brand Architecture by {SITE_NAME}
         </p>
       </div>
     </main>

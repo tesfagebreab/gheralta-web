@@ -2,15 +2,27 @@
 import { useEffect, useState } from "react";
 import { getCart } from "@/lib/cart";
 import Link from "next/link";
-import { getBrand } from "@/lib/constants";
+import { getBrand } from "@/lib/domain-helper";
+
+// Force Next.js to skip the cache
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default function SelectedToursFloat() {
   const [count, setCount] = useState(0);
   const [ids, setIds] = useState<string[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
-  const brand = getBrand();
+  const [brand, setBrand] = useState<any>(null);
 
   useEffect(() => {
+    // 1. Fetch Brand configuration
+    async function initBrand() {
+      const brandData = await getBrand();
+      setBrand(brandData);
+    }
+    initBrand();
+
+    // 2. Setup Cart Logic
     const updateCart = () => {
       const cart = getCart();
       setCount(cart.length);
@@ -26,7 +38,8 @@ export default function SelectedToursFloat() {
     return () => window.removeEventListener("cart-updated", updateCart);
   }, []);
 
-  if (count === 0) return null;
+  // Don't show if cart is empty or brand isn't loaded yet
+  if (count === 0 || !brand) return null;
 
   return (
     /* Adjusted bottom and max-width for mobile browser safety and to avoid overlapping the chat button */

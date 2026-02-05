@@ -1,11 +1,13 @@
 "use client";
+
 import Link from "next/link";
-import { useEffect } from "react";
-import { getBrand, SITE_NAME } from "@/lib/constants";
+import { useEffect, use } from "react";
 import { clearCart } from "@/lib/cart";
+import { getBrand } from "@/lib/domain-helper";
 
 export default function SuccessPage() {
-  const brand = getBrand();
+  // Use the 'use' hook to unwrap the brand data and resolve the red underline
+  const brand = use(getBrand());
 
   useEffect(() => {
     // Ensure the trip is cleared so the floating cart/trip button disappears
