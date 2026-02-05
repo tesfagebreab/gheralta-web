@@ -1,6 +1,10 @@
 // src/lib/constants.ts
 
-export const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+const rawStrapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+// Sanitize: If it doesn't start with http, and it's not empty, add https://
+export const STRAPI_URL = rawStrapiUrl.startsWith('http') 
+  ? rawStrapiUrl 
+  : `https://${rawStrapiUrl}`;
 export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.dev";
 
 /**
