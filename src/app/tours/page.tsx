@@ -2,11 +2,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-
-import { STRAPI_URL, getField, getStrapiMedia } from "@/lib/constants";
-import { getBrand } from "@/lib/domain-helper";
-
-export const dynamic = 'force-dynamic';
+import { STRAPI_URL, SITE_NAME, getStrapiMedia, getBrand, getField } from "@/lib/constants";
 
 // --- HELPERS ---
 
@@ -29,7 +25,7 @@ export default function ToursPage() {
   const [filteredTours, setFilteredTours] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [brand, setBrand] = useState<any>(null);
+  const brand = getBrand();
 
   // Filters State
   const [filterType, setFilterType] = useState("All");
@@ -37,14 +33,8 @@ export default function ToursPage() {
   const [filterDuration, setFilterDuration] = useState("All");
 
   useEffect(() => {
-    async function initAndFetch() {
+    async function fetchTours() {
       try {
-        // 1. Get Dynamic Brand
-        const brandData = await getBrand();
-        setBrand(brandData);
-        const currentDomainName = brandData.domain.toLowerCase().replace(/\s+/g, '');
-
-        // 2. Fetch Tours
         const query = `${STRAPI_URL}/api/tours?populate=*`;
         const response = await fetch(query, { cache: 'no-store', mode: 'cors' });
         
@@ -53,31 +43,32 @@ export default function ToursPage() {
         const json = await response.json();
         const data = json.data || [];
 
-        // 3. Domain Filtering Logic
+        // Domain Filtering
         const domainFiltered = data.filter((tour: any) => {
-          const domains = tour.domains || tour.attributes?.domains?.data || [];
+          const domains = tour.domains || [];
           if (domains.length === 0) return true; 
-          
+          const targetBrand = SITE_NAME.toLowerCase().replace(/\s+/g, '');
           return domains.some((d: any) => {
-            const dName = (d.name || d.Name || d.domain || d.attributes?.name || "").toLowerCase().replace(/\s+/g, '');
-            return dName.includes(currentDomainName);
+            const currentName = (d.name || d.Name || d.domain || "").toLowerCase().replace(/\s+/g, '');
+            return currentName.includes(targetBrand);
           });
         });
 
         setTours(domainFiltered);
 
-        // 4. URL Parameter Handling
+        // --- AUTOMATIC SELECTION BASED ON URL ---
         const params = new URLSearchParams(window.location.search);
         const typeSlug = params.get("type");
         const diffParam = params.get("difficulty");
         const durParam = params.get("duration");
 
         if (typeSlug) {
-          const allTypes = domainFiltered.flatMap((t: any) => getField(t, 'types') || []);
-          const match = allTypes.find((ty: any) => 
-            getField(ty, 'Slug') === typeSlug || 
-            getField(ty, 'Title')?.toLowerCase().replace(/\s+/g, '-') === typeSlug.toLowerCase()
-          );
+          // Adding : any to 't' and 'ty' satisfies the build requirements
+const allTypes = domainFiltered.flatMap((t: any) => getField(t, 'types') || []);
+const match = allTypes.find((ty: any) => 
+  getField(ty, 'Slug') === typeSlug || 
+  getField(ty, 'Title')?.toLowerCase().replace(/\s+/g, '-') === typeSlug.toLowerCase()
+);
           if (match) setFilterType(getField(match, 'Title'));
         }
 
@@ -91,7 +82,7 @@ export default function ToursPage() {
         setLoading(false);
       }
     }
-    initAndFetch();
+    fetchTours();
   }, []);
 
   // Filter Logic
@@ -123,11 +114,11 @@ export default function ToursPage() {
   }, [filterType, filterDifficulty, filterDuration, tours]);
 
   const uniqueTypes = Array.from(new Set(tours.flatMap(t => {
-      const types = getField(t, 'types');
-      return Array.isArray(types) ? types.map(ty => getField(ty, 'Title')) : [];
+     const types = getField(t, 'types');
+     return Array.isArray(types) ? types.map(ty => getField(ty, 'Title')) : [];
   }))).filter(Boolean);
 
-  if (loading || !brand) {
+  if (loading) {
     return (
       <div className="h-screen flex items-center justify-center font-black uppercase text-[10px] tracking-widest text-slate-400 animate-pulse">
         Loading Expeditions...
@@ -139,50 +130,53 @@ export default function ToursPage() {
     <main className="max-w-6xl mx-auto p-4 md:p-12 pt-24 font-sans overflow-x-hidden">
       <header className="mb-10 md:mb-16 px-2">
         <h1 className="text-4xl md:text-7xl font-black text-slate-900 uppercase italic tracking-tighter leading-tight break-words">
-          Our <span className={brand.colors.accent}>{brand.name.split(' ')[1] || 'Expeditions'}</span>
+          Our <span className={brand.accent}>Expeditions</span>
         </h1>
         <p className="text-slate-400 mt-3 md:mt-4 font-bold uppercase tracking-[0.2em] text-[9px] md:text-[10px]">
-          Curated experiences for {brand.name}
+          Curated experiences for {SITE_NAME}
         </p>
       </header>
 
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
-        {/* FILTERS */}
+        {/* FILTERS - Responsive Scroll on Mobile */}
         <aside className="w-full lg:w-48 flex-shrink-0 space-y-8 lg:space-y-10">
-          <div>
+          {/* Types Filter */}
+          <div className="px-2 lg:px-0">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900 mb-4 md:mb-6 border-b border-slate-100 pb-2">Types</h3>
             <div className="flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0 no-scrollbar">
               <button onClick={() => setFilterType("All")} className="flex items-center gap-2 md:gap-3 group text-left whitespace-nowrap shrink-0">
-                <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterType === "All" ? brand.colors.bgAccent : "border-slate-300 group-hover:border-orange-400"}`} />
+                <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterType === "All" ? brand.bgAccent : "border-slate-300 group-hover:border-orange-400"}`} />
                 <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-tight ${filterType === "All" ? "text-slate-900" : "text-slate-400"}`}>All Types</span>
               </button>
               {uniqueTypes.map((t: any) => (
                 <button key={t} onClick={() => setFilterType(t)} className="flex items-center gap-2 md:gap-3 group text-left whitespace-nowrap shrink-0">
-                  <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterType === t ? brand.colors.bgAccent : "border-slate-300 group-hover:border-orange-400"}`} />
+                  <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterType === t ? brand.bgAccent : "border-slate-300 group-hover:border-orange-400"}`} />
                   <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-tight ${filterType === t ? "text-slate-900" : "text-slate-400"}`}>{t}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          <div>
+          {/* Difficulty Filter */}
+          <div className="px-2 lg:px-0">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900 mb-4 md:mb-6 border-b border-slate-100 pb-2">Difficulty</h3>
             <div className="flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0 no-scrollbar">
               {["All", "Easy", "Moderate", "Challenging", "Extreme"].map((d) => (
                 <button key={d} onClick={() => setFilterDifficulty(d)} className="flex items-center gap-2 md:gap-3 group text-left whitespace-nowrap shrink-0">
-                  <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterDifficulty === d ? brand.colors.bgAccent : "border-slate-300 group-hover:border-orange-400"}`} />
+                  <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterDifficulty === d ? brand.bgAccent : "border-slate-300 group-hover:border-orange-400"}`} />
                   <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-tight ${filterDifficulty === d ? "text-slate-900" : "text-slate-400"}`}>{d === "All" ? "All Levels" : d}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          <div>
+          {/* Duration Filter */}
+          <div className="px-2 lg:px-0">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900 mb-4 md:mb-6 border-b border-slate-100 pb-2">Duration</h3>
             <div className="flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0 no-scrollbar">
               {["All", "Short (<3 Days)", "Medium (3-6 Days)", "Long (7+ Days)"].map((dur) => (
                 <button key={dur} onClick={() => setFilterDuration(dur)} className="flex items-center gap-2 md:gap-3 group text-left whitespace-nowrap shrink-0">
-                  <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterDuration === dur ? brand.colors.bgAccent : "border-slate-300 group-hover:border-orange-400"}`} />
+                  <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterDuration === dur ? brand.bgAccent : "border-slate-300 group-hover:border-orange-400"}`} />
                   <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-tight ${filterDuration === dur ? "text-slate-900" : "text-slate-400"}`}>{dur === "All" ? "All Durations" : dur}</span>
                 </button>
               ))}
@@ -249,7 +243,7 @@ export default function ToursPage() {
                   
                   <div className="px-2 md:px-4 flex-grow">
                     <Link href={`/tours/${slug}`}>
-                      <h2 className={`text-xl md:text-2xl font-black text-slate-900 tracking-tighter uppercase italic mb-2 md:mb-3 leading-tight break-words transition-colors ${brand.colors.accent}`}>
+                      <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tighter uppercase italic mb-2 md:mb-3 leading-tight break-words group-hover:text-orange-700 transition-colors">
                         {title}
                       </h2>
                     </Link>
@@ -262,13 +256,13 @@ export default function ToursPage() {
                     <div>
                       <p className="text-[7px] md:text-[8px] font-black text-slate-400 uppercase tracking-widest">Starting From </p>
                       <p className="text-lg md:text-xl font-black text-slate-900 tracking-tighter">
-                        {startingPrice ? `$${startingPrice}` : <span className="text-[10px] italic font-medium text-slate-400">price upon request</span>}
+                        {startingPrice ? `$${startingPrice}` : <span className="text-[10px] italic font-medium text-slate-400">Price upon request</span>}
                       </p>
                     </div>
                     
                     <Link 
                       href={`/tours/${slug}`}
-                      className={`px-5 md:px-6 py-2.5 md:py-3 rounded-lg md:rounded-xl text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all ${brand.colors.bgAccent} text-white shadow-md active:scale-95`}
+                      className={`px-5 md:px-6 py-2.5 md:py-3 rounded-lg md:rounded-xl text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all ${brand.bgAccent} text-white shadow-md active:scale-95`}
                     >
                       Explore
                     </Link>

@@ -3,11 +3,16 @@ import Image from "next/image";
 import Link from "next/link";
 import React from 'react';
 import { notFound } from "next/navigation";
-
-import { STRAPI_URL, getField, getStrapiMedia } from "@/lib/constants";
-import { getBrand } from "@/lib/domain-helper";
+import { 
+  STRAPI_URL, 
+  getBrand, 
+  SITE_NAME, 
+  getField, 
+  getStrapiMedia 
+} from "@/lib/constants";
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -74,10 +79,6 @@ const RenderBlocks = ({ content, accentColor }: { content: any[], accentColor: s
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  
-  const brand = await getBrand(); 
-  const SITE_NAME = brand.domain;
-
   try {
     const res = await fetch(`${STRAPI_URL}/api/posts?filters[slug][$eq]=${slug}&populate=*`);
     const json = await res.json();
@@ -94,10 +95,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
+  const brand = getBrand();
 
-  const brand = await getBrand(); 
-  const SITE_NAME = brand.domain;
-  
   const fetchUrl = `${STRAPI_URL}/api/posts?filters[slug][$eq]=${slug}&populate=*`;
   const res = await fetch(fetchUrl, { cache: 'no-store' });
   const json = await res.json();

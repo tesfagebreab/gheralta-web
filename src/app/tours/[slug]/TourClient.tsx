@@ -3,16 +3,11 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link"; 
 import { notFound, useParams, useRouter } from "next/navigation";
-
-import { STRAPI_URL, getField, getStrapiMedia } from "@/lib/constants";
-import { getBrand } from "@/lib/domain-helper";
-
+import { STRAPI_URL, SITE_NAME, getBrand, getStrapiMedia } from "@/lib/constants";
 import { addToCart, getCart } from "@/lib/cart";
 import { Clock, Mountain, Map, MapPin, CheckCircle, Briefcase, Calendar } from "lucide-react";
 import React from 'react';
 import TourGallery from "@/components/TourGallery"; 
-
-export const dynamic = 'force-dynamic';
 
 // --- HELPERS ---
 
@@ -122,10 +117,10 @@ export default function TourDetail() {
   const params = useParams();
   const router = useRouter();
   const slug = params?.slug;
+  const brand = getBrand();
   
   const [tour, setTour] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [brand, setBrand] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false); 
   const [isInCart, setIsInCart] = useState(false);
@@ -135,10 +130,6 @@ export default function TourDetail() {
     async function fetchTour() {
       if (!slug) return;
       try {
-        // Fetch Brand First
-        const brandData = await getBrand();
-        setBrand(brandData);
-
         const query = `${STRAPI_URL}/api/tours?filters[slug][$eq]=${slug}&populate[DailyPlan][populate]=*&populate[pricing_tiers][populate]=*&populate[Gallery][populate]=*&populate[destinations][populate]=*&populate[types][populate]=*&populate[tags][populate]=*`;
         const response = await fetch(query, { cache: "no-store" });
         const json = await response.json();
@@ -197,7 +188,7 @@ export default function TourDetail() {
     
     const payload = {
       type: "INQUIRY",
-      siteName: brand?.name || "Gheralta Tourism",
+      siteName: SITE_NAME,
       data: {
         tourTitle: tour?.Title || "General Inquiry",
         fullName: (form[0] as HTMLInputElement).value || "",
@@ -228,31 +219,33 @@ export default function TourDetail() {
     }
   };
 
-  if (loading || !brand) return <div className="h-screen flex items-center justify-center font-bold text-xs text-slate-400 uppercase tracking-widest">Loading Adventure...</div>;
+  if (loading) return <div className="h-screen flex items-center justify-center font-bold text-xs text-slate-400 uppercase tracking-widest">Loading Adventure...</div>;
   if (!tour) return notFound();
 
   const tiers = tour.Pricing_Tiers || {};
-  const priceArray = [tiers?.tier_1, tiers?.tier_2_3, tiers?.tier_4_10, tiers?.tier_11_plus, tour?.Price_Starting_At].filter(p => typeof p === 'number' && p > 0);
+  const priceArray = [tiers?.tier_1, tiers?.tier_2_3, tiers?.tier_4_10, tiers?.tier_11_plus].filter(p => p != null) as number[];
   const startingPrice = priceArray.length > 0 ? Math.min(...priceArray) : null;
   const hasPricing = startingPrice !== null;
   const itinerary = Array.isArray(tour.DailyPlan) ? tour.DailyPlan : [];
   const gallery = Array.isArray(tour.Gallery) ? tour.Gallery : [];
   
+  // Prepare gallery images for the optimized component
   const galleryImages = gallery.map((img: any) => ({
     url: getStrapiMedia(img) || "",
     alternativeText: img.alternativeText || img.caption || tour.Title || "Gallery Image"
-  })).filter((img: any) => img.url !== "");
+// Adding (img: any) or (img: { url: string }) satisfies the compiler
+})).filter((img: any) => img.url !== "");
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <nav className="p-6 border-b border-slate-100 flex justify-between items-center">
-        <Link href="/tours" className={`${brand.colors.accent} font-bold hover:underline transition-all uppercase text-[10px] tracking-widest`}>
+        <Link href="/tours" className={`${brand.accent} font-bold hover:underline transition-all uppercase text-[10px] tracking-widest`}>
           ← Back to Tours
         </Link>
         <span className="font-black italic tracking-tighter uppercase">{(brand.name || "Tour").split(' ')[0]}.</span>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section - UPDATED WITH SAFE WRAPPING AND CENTERING */}
       <div className="relative h-[65vh] w-full bg-slate-900 flex items-center justify-center overflow-hidden">
         {tour.Image && (
           <Image src={getStrapiMedia(tour.Image) || ""} alt={tour.Title || "Hero"} fill className="object-cover opacity-70" priority />
@@ -287,7 +280,7 @@ export default function TourDetail() {
               { label: "Destinations", value: safeText(tour.Destinations, true), icon: <MapPin size={20} /> }
             ].map((fact, i) => (
               <div key={i} className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                <span className={`${brand.colors.accent} mb-2 block`}>{fact.icon}</span>
+                <span className={`${brand.accent} mb-2 block`}>{fact.icon}</span>
                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{fact.label}</p>
                 <div className="font-bold text-slate-900 text-sm whitespace-pre-line">{fact.value || "Request Info"}</div>
               </div>
@@ -295,7 +288,7 @@ export default function TourDetail() {
           </div>
 
           <h2 className="text-3xl font-black italic uppercase tracking-tight mb-6">Adventure Overview</h2>
-          <div className={`text-xl text-slate-600 leading-relaxed border-l-4 ${brand.colors.accent.replace('text-', 'border-')}/20 pl-6 mb-16`}>
+          <div className={`text-xl text-slate-600 leading-relaxed border-l-4 ${brand.accent.replace('text-', 'border-')}/20 pl-6 mb-16`}>
             {renderStrapiBlocks(tour.Description) || "Description details are coming soon."}
           </div>
 
@@ -309,7 +302,7 @@ export default function TourDetail() {
                 <button 
                   key={t.id}
                   onClick={() => setActiveTab(t.id)}
-                  className={`pb-4 text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === t.id ? `${brand.colors.accent} border-b-2 ${brand.colors.accent.replace('text-', 'border-')}` : "text-slate-400"}`}
+                  className={`pb-4 text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === t.id ? `${brand.accent} border-b-2 ${brand.accent.replace('text-', 'border-')}` : "text-slate-400"}`}
                 >
                   {t.icon} {t.label}
                 </button>
@@ -321,7 +314,7 @@ export default function TourDetail() {
                 <div className="relative border-l-2 border-slate-100 ml-4 md:ml-6 space-y-12">
                   {itinerary.length > 0 ? itinerary.map((day: any, index: number) => (
                     <div key={index} className="relative pl-12 group">
-                      <div className={`absolute -left-[13px] top-0 w-6 h-6 rounded-full border-4 border-white shadow-md transition-transform group-hover:scale-125 ${brand.colors.bgAccent}`} />
+                      <div className={`absolute -left-[13px] top-0 w-6 h-6 rounded-full border-4 border-white shadow-md transition-transform group-hover:scale-125 ${brand.bgAccent}`} />
                       <div className="flex flex-col">
                         <h3 className="font-black italic uppercase text-2xl text-slate-900 mb-3 tracking-tighter leading-tight break-words">
                           {day.DayTitle || `Day ${index + 1}`}
@@ -355,6 +348,7 @@ export default function TourDetail() {
             </div>
           </div>
 
+          {/* Visual Journey - Updated with TourGallery Component */}
           <h2 className="text-3xl font-black italic uppercase tracking-tight mb-8">Visual Journey</h2>
           <div className="mb-16">
             {galleryImages.length > 0 ? (
@@ -378,9 +372,9 @@ export default function TourDetail() {
                 </div>
                 <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900 mb-4">Inquiry Received</h2>
                 <p className="text-slate-600 italic max-w-md mx-auto leading-relaxed mb-8">
-                  Thank you for reaching out! Expect a response within <span className={`text-slate-900 font-bold not-italic underline ${brand.colors.accent.replace('text-', 'decoration-')} ml-1`}>24 hours</span>.
+                  Thank you for reaching out! Expect a response within <span className={`text-slate-900 font-bold not-italic underline ${brand.accent.replace('text-', 'decoration-')} ml-1`}>24 hours</span>.
                 </p>
-                <button onClick={() => setIsSubmitted(false)} className={`text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ${brand.colors.accent.replace('text-', 'hover:text-')} transition-all`}>
+                <button onClick={() => setIsSubmitted(false)} className={`text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ${brand.accent.replace('text-', 'hover:text-')} transition-all`}>
                   ← Send another message
                 </button>
               </div>
@@ -401,15 +395,15 @@ export default function TourDetail() {
                   ].map((field, i) => (
                     <div key={i} className="flex flex-col gap-1">
                       <label className="text-[10px] font-black uppercase text-slate-400 ml-2">{field.label}</label>
-                      <input required type={field.type} className={`bg-white border border-slate-200 rounded-2xl p-4 focus:ring-2 ${brand.colors.accent.replace('text-', 'focus:ring-')} outline-none`} />
+                      <input required type={field.type} className={`bg-white border border-slate-200 rounded-2xl p-4 focus:ring-2 ${brand.accent.replace('text-', 'focus:ring-')} outline-none`} />
                     </div>
                   ))}
                   <div className="flex flex-col gap-1 md:col-span-2">
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Tell us More</label>
-                    <textarea required rows={5} className={`bg-white border border-slate-200 rounded-2xl p-4 focus:ring-2 ${brand.colors.accent.replace('text-', 'focus:ring-')} outline-none resize-none`} />
+                    <textarea required rows={5} className={`bg-white border border-slate-200 rounded-2xl p-4 focus:ring-2 ${brand.accent.replace('text-', 'focus:ring-')} outline-none resize-none`} />
                   </div>
                   <div className="md:col-span-2">
-                    <button disabled={isSubmitting} type="submit" className={`w-full ${brand.colors.bgAccent} text-white font-black py-5 rounded-2xl ${brand.colors.buttonHover} transition-all uppercase tracking-[0.2em] text-sm shadow-xl disabled:bg-slate-400`}>
+                    <button disabled={isSubmitting} type="submit" className={`w-full ${brand.bgAccent} text-white font-black py-5 rounded-2xl ${brand.buttonHover} transition-all uppercase tracking-[0.2em] text-sm shadow-xl disabled:bg-slate-400`}>
                       {isSubmitting ? "SENDING..." : "SEND INQUIRY"}
                     </button>
                   </div>
@@ -424,20 +418,14 @@ export default function TourDetail() {
             <div className="space-y-6">
               <div>
                 <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">{hasPricing ? "Starting From" : "Bespoke Adventure"}</p>
-                <div className="text-4xl font-black italic tracking-tighter text-slate-900">
-                  {hasPricing ? (
-                    <>
-                      ${startingPrice}
-                      <span className="text-xs font-bold text-slate-400 uppercase ml-2 italic">/ person</span>
-                    </>
-                  ) : (
-                    <span className="text-2xl">price upon request</span>
-                  )}
-                </div>
+                <p className="text-4xl font-black italic tracking-tighter text-slate-900">
+                  {hasPricing ? `$${startingPrice}` : "On Request"}
+                  {hasPricing && <span className="text-xs font-bold text-slate-400 uppercase ml-2 italic">/ person</span>}
+                </p>
               </div>
               <div className="flex flex-col gap-3">
                 {hasPricing && (
-                  <button onClick={handleToggleCart} className={`w-full font-black py-5 rounded-2xl transition-all uppercase tracking-widest text-xs text-center shadow-lg ${isInCart ? "bg-slate-900 text-white" : `${brand.colors.bgAccent} text-white ${brand.colors.buttonHover}`}`}>
+                  <button onClick={handleToggleCart} className={`w-full font-black py-5 rounded-2xl transition-all uppercase tracking-widest text-xs text-center shadow-lg ${isInCart ? "bg-slate-900 text-white" : `${brand.bgAccent} text-white ${brand.buttonHover}`}`}>
                     {isInCart ? "Go to Check Out!" : "+ Add to Tour Cart"}
                   </button>
                 )}

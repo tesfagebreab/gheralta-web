@@ -1,10 +1,9 @@
-import { STRAPI_URL, getField, getStrapiMedia } from "@/lib/constants";
-import { getBrand } from "@/lib/domain-helper";
-
+import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
 import { Metadata } from "next";
 import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // --- HELPERS ---
 
@@ -66,10 +65,6 @@ const renderStrapiBlocks = (content: any) => {
 
 // --- DATA FETCHING ---
 async function getBookingTermsForDomain() {
-  
-  const brand = await getBrand(); 
-  const SITE_NAME = brand.domain;
-
   try {
     const res = await fetch(`${STRAPI_URL}/api/booking-terms?populate=*`, {
       cache: 'no-store'
@@ -93,9 +88,6 @@ async function getBookingTermsForDomain() {
 // --- SEO ---
 export async function generateMetadata(): Promise<Metadata> {
   const data = await getBookingTermsForDomain();
-  const brand = await getBrand(); 
-  const SITE_NAME = brand.domain;
-
   const seo = getField(data, 'seo');
   const metaImg = getField(seo, 'meta_image');
 
@@ -109,8 +101,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BookingTermsPage() {
-  const brand = await getBrand(); 
-  const SITE_NAME = brand.domain;
+  const brand = getBrand();
   const data = await getBookingTermsForDomain();
 
   if (!data) {

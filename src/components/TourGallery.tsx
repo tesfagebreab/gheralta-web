@@ -2,8 +2,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
-import { getBrand } from "@/lib/domain-helper";
+import { useState } from 'react';
 
 interface GalleryProps {
   images: Array<{
@@ -14,15 +13,6 @@ interface GalleryProps {
 
 export default function TourGallery({ images }: GalleryProps) {
   const [activeImage, setActiveImage] = useState(images[0]?.url);
-  const [brand, setBrand] = useState<any>(null);
-
-  useEffect(() => {
-    async function initBrand() {
-      const brandData = await getBrand();
-      setBrand(brandData);
-    }
-    initBrand();
-  }, []);
 
   if (!images || images.length === 0) return null;
 
@@ -37,7 +27,6 @@ export default function TourGallery({ images }: GalleryProps) {
           className="object-cover transition-opacity duration-500"
           sizes="(max-width: 768px) 100vw, 80vw"
           priority 
-          unoptimized
         />
       </div>
 
@@ -47,13 +36,10 @@ export default function TourGallery({ images }: GalleryProps) {
           <button
             key={idx}
             onClick={() => setActiveImage(img.url)}
-            className="relative h-16 w-20 md:h-20 md:w-24 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all snap-start"
-            style={{ 
-              borderColor: activeImage === img.url && brand ? brand.colors.primary : 'rgb(231 229 228)', // stone-200 fallback
-              transform: activeImage === img.url ? 'scale(1.05)' : 'scale(1)',
-              zIndex: activeImage === img.url ? 10 : 0,
-              opacity: activeImage === img.url ? 1 : 0.7
-            }}
+            className={`relative h-16 w-20 md:h-20 md:w-24 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all snap-start
+              ${activeImage === img.url 
+                ? 'border-[#c2410c] scale-105 z-10' 
+                : 'border-stone-200 opacity-80 md:opacity-70'}`}
           >
             <Image
               src={img.url}
@@ -61,7 +47,6 @@ export default function TourGallery({ images }: GalleryProps) {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 80px, 100px"
-              unoptimized
             />
           </button>
         ))}

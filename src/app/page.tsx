@@ -1,14 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Metadata } from "next";
-
-import { STRAPI_URL, getField, getStrapiMedia } from "@/lib/constants";
-import { getBrand } from "@/lib/domain-helper";
-
+import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
 import TrustBanner from "@/components/TrustBanner";
 
 // Force Next.js to skip the cache and re-run the logic on every visit
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // --- HELPERS ---
 
@@ -26,45 +24,43 @@ const parseStrapiBlocks = (content: any): string => {
   return "";
 };
 
-export async function generateMetadata(): Promise<Metadata> {
-  const brand = await getBrand();
-  const SITE_NAME = brand.domain;
-
+export async function generateMetadata(): Promise <Metadata> {
+  const brand = getBrand();
+  if (!brand?.docId) return { title: SITE_NAME };
   try {
-    // Filter by domain name instead of docId
-    const res = await fetch(`${STRAPI_URL}/api/homepages?filters[domain][name][$containsi]=${SITE_NAME}&populate[SEO]=*`, { cache: 'no-store' });
+    const res = await fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[SEO]=*`, { cache: 'no-store' });
     const json = await res.json();
-    const homeData = json.data?.[0] || {};
+    const homeData = json.data || {};
     const seo = getField(homeData, 'SEO');
-    
     return {
-      title: getField(seo, 'meta_title') || getField(homeData, 'Hero_Title') || `${brand.name}`,
+      title: getField(seo, 'meta_title') || getField(homeData, 'Hero_Title') || `${SITE_NAME}`,
       description: getField(seo, 'meta_description') || "Expert-led tours in Northern Ethiopia.",
       alternates: { canonical: `https://${SITE_NAME.toLowerCase()}` },
     };
   } catch (error) {
-    return { title: brand.name };
+    return { title: SITE_NAME };
   }
 }
 
 export default async function Home() {
-  const brand = await getBrand();
-  const SITE_NAME = brand.domain;
+  const brand = getBrand();
+
+  if (!brand?.docId) {
+    return <div className="p-20 text-center font-black uppercase">Configuration Error: Brand ID Missing.</div>;
+  }
 
   try {
-    // We use the dynamic SITE_NAME to filter both the Homepage content and the relevant Tours
+    // Simplified population: hero_image is a direct media field
     const [homeRes, tourRes] = await Promise.all([
-      fetch(`${STRAPI_URL}/api/homepages?filters[domain][name][$containsi]=${SITE_NAME}&populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`, { cache: 'no-store' }),
-      fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][name][$containsi]=${SITE_NAME}`, { cache: 'no-store' })
+      fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`, { cache: 'no-store' }),
+      fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][domain][$containsi]=${SITE_NAME}`, { cache: 'no-store' })
     ]);
 
     if (!homeRes.ok) throw new Error("Failed to fetch Homepage");
 
     const homeJson = await homeRes.json();
     const tourJson = await tourRes.json();
-    
-    // Homepage is now an array from the filter, so we take the first item
-    const homeData = homeJson.data?.[0] || {};
+    const homeData = homeJson.data || {};
     const allTours = tourJson.data || [];
 
     // --- Extract Fields ---
@@ -74,6 +70,7 @@ export default async function Home() {
     const partnerLogos = getField(homeData, "Partner_Logos");
     const founderMsg = getField(homeData, "Founder_Philosophy");
     
+    // Applying the specific image logic from About Us
     const featuredImgUrl = getStrapiMedia(heroImageRaw, 'large');
     
     // Extract TrustBanner Data (Single Object Logic)
@@ -90,7 +87,7 @@ export default async function Home() {
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50">
            <div className="text-center p-12 bg-white rounded-3xl shadow-sm border border-slate-100">
-             <h1 className="text-xl font-black uppercase italic text-slate-400">{brand.name}</h1>
+             <h1 className="text-xl font-black uppercase italic text-slate-400">{SITE_NAME}</h1>
              <p className="text-slate-400 mt-2">Content update in progress...</p>
            </div>
         </div>
@@ -99,7 +96,7 @@ export default async function Home() {
 
     return (
       <main className="min-h-screen bg-slate-50 font-sans overflow-x-hidden">
-        {/* HERO SECTION */}
+        {/* HERO SECTION - Adjusted alignment to sit just below menu titles */}
         <section className="relative w-full h-[75vh] flex items-start justify-center pt-16 md:pt-20 overflow-hidden bg-slate-900">
            {featuredImgUrl && (
              <Image

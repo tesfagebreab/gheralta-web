@@ -4,12 +4,11 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SelectedToursFloat from "@/components/SelectedToursFloat";
-
-import { STRAPI_URL, getField, getStrapiMedia } from "@/lib/constants";
-import { getBrand, getDynamicContact } from "@/lib/domain-helper";
+import { getBrand, SITE_NAME, STRAPI_URL, getStrapiMedia } from "@/lib/constants";
 
 // Force fresh data on every request for multi-tenant domain switching
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 // Viewport export: maximum-scale=1 and user-scalable=no prevents 
 // "auto-zoom" on input fields in iOS, which can break layout.
@@ -39,16 +38,14 @@ const mono = JetBrains_Mono({
 
 /**
  * Helper to fetch brand-specific assets (Logo, Favicon) from Strapi v5
- * Updated to use domain name filtering instead of docId
  */
-async function getBrandAssets(domainName: string) {
+async function getBrandAssets(docId: string) {
   try {
-    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${domainName}&populate=*`, {
+    const res = await fetch(`${STRAPI_URL}/api/domains/${docId}?populate=*`, {
       next: { revalidate: 3600 }
     });
     const json = await res.json();
-    // Return the first match from the data array
-    return json.data?.[0];
+    return json.data;
   } catch (error) {
     console.error("Layout: Failed to fetch brand assets", error);
     return null;
@@ -56,14 +53,12 @@ async function getBrandAssets(domainName: string) {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brandConfig = await getBrand();
-  const SITE_NAME = brandConfig.domain;
-  const brandData = await getBrandAssets(SITE_NAME);
+  const brandConfig = getBrand();
+  const brandData = await getBrandAssets(brandConfig.docId);
   
   // Navigate the Strapi v5 media object structure properly
-  // Since we fetch via filters, the structure is usually direct or under attributes in Strapi 5
-  const faviconObj = brandData?.favicon || brandData?.attributes?.favicon;
-  const logoObj = brandData?.brand_logo || brandData?.attributes?.brand_logo;
+  const faviconObj = brandData?.attributes?.favicon?.data || brandData?.favicon?.data;
+  const logoObj = brandData?.attributes?.brand_logo?.data || brandData?.brand_logo?.data;
   
   const faviconUrl = getStrapiMedia(faviconObj || logoObj, 'thumbnail') || "/icon.png";
   
@@ -106,9 +101,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // We fetch brand here to ensure it's available for child components if needed
-  const brand = await getBrand();
-
   return (
     <html lang="en" className="scroll-smooth">
       <body

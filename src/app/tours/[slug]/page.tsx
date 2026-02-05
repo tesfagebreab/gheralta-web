@@ -1,22 +1,12 @@
 import { Metadata } from "next";
 import TourDetail from "./TourClient";
-//import { STRAPI_URL, SITE_NAME, getStrapiMedia } from "@/lib/constants";
-
-import { STRAPI_URL, getStrapiMedia } from "@/lib/constants";
-import { getBrand } from "@/lib/domain-helper";
-
-
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+import { STRAPI_URL, SITE_NAME, getStrapiMedia } from "@/lib/constants";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
- const brand = await getBrand();
-  const SITE_NAME = brand.domain;
-
   const { slug } = await params;
   
   try {

@@ -7,7 +7,6 @@ interface TrustBannerProps {
     colors: {
       accent: string;
       bgAccent: string;
-      primary: string;
     }
   };
 }
@@ -17,7 +16,6 @@ export default function TrustBanner({ data, brand }: TrustBannerProps) {
   if (!data) return null;
 
   // 2. Data Extraction
-  // Supporting both direct object (non-repeatable) and nested attributes structure
   const headline = getField(data, "headline") || "";
   const subheadline = getField(data, "subheadline") || "";
   const yearsExp = getField(data, "years_experience") || 0;
@@ -37,13 +35,11 @@ export default function TrustBanner({ data, brand }: TrustBannerProps) {
 
   const safeMap = (items: any) => {
     if (!items) return [];
-    // Ensure we handle Strapi v5 data arrays which might be nested under .data
-    const target = items.data || items;
-    return Array.isArray(target) ? target : [target];
+    return Array.isArray(items) ? items : [items];
   };
 
   return (
-    <section className="bg-stone-950 py-16 md:py-24 text-white overflow-hidden rounded-[2.5rem] md:rounded-[4rem] my-8 md:my-12 mx-4 md:mx-0 shadow-2xl border border-white/5">
+    <section className="bg-slate-900 py-16 md:py-24 text-white overflow-hidden rounded-[2.5rem] md:rounded-[4rem] my-8 md:my-12 mx-4 md:mx-0 shadow-2xl">
       <div className="max-w-6xl mx-auto px-6">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-16 items-center mb-16 md:mb-20">
@@ -52,17 +48,17 @@ export default function TrustBanner({ data, brand }: TrustBannerProps) {
             <h2 className="text-3xl md:text-6xl font-black italic tracking-tighter leading-[1] md:leading-[0.9] mb-6 md:mb-8 uppercase">
               {headline}
             </h2>
-            <p className="text-stone-400 text-base md:text-lg leading-relaxed max-w-2xl font-medium">
+            <p className="text-slate-400 text-base md:text-lg leading-relaxed max-w-2xl font-medium">
               {subheadline}
             </p>
             
             <div className="flex gap-8 md:gap-12 mt-8 md:mt-10">
               {/* Experience Metric */}
               <div>
-                <p className="text-4xl md:text-5xl font-black tracking-tighter" style={{ color: brand.colors.primary }}>
+                <p className="text-4xl md:text-5xl font-black tracking-tighter" style={{ color: brand.colors.accent }}>
                   {yearsExp}+
                 </p>
-                <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-stone-500 mt-1">Years Excellence</p>
+                <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-500 mt-1">Years Excellence</p>
               </div>
 
               {/* Client Metric */}
@@ -70,7 +66,7 @@ export default function TrustBanner({ data, brand }: TrustBannerProps) {
                 <p className="text-4xl md:text-5xl font-black text-white tracking-tighter">
                   {clientNumber}
                 </p>
-                <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-stone-500 mt-1">
+                <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-500 mt-1">
                   {clientText}
                 </p>
               </div>
@@ -79,7 +75,7 @@ export default function TrustBanner({ data, brand }: TrustBannerProps) {
 
           {/* Founder Image Display */}
           <div className="lg:col-span-5 relative order-1 lg:order-2">
-            <div className="relative z-10 rounded-[2rem] md:rounded-[3rem] overflow-hidden border-4 md:border-8 border-stone-900 aspect-[4/5] shadow-2xl bg-stone-900">
+            <div className="relative z-10 rounded-[2rem] md:rounded-[3rem] overflow-hidden border-4 md:border-8 border-slate-800 aspect-[4/5] shadow-2xl bg-slate-800">
               {founderImgUrl ? (
                 <Image 
                   src={founderImgUrl}
@@ -89,22 +85,21 @@ export default function TrustBanner({ data, brand }: TrustBannerProps) {
                   unoptimized
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center italic text-stone-700">
+                <div className="w-full h-full flex items-center justify-center italic text-slate-600">
                   No Image
                 </div>
               )}
             </div>
             
-            {/* Dynamic Glow Effect */}
             <div 
-              className="absolute -bottom-4 -right-4 md:-bottom-6 md:-right-6 w-full h-full rounded-[2rem] md:rounded-[3rem] opacity-20 -z-0 blur-2xl"
-              style={{ backgroundColor: brand.colors.primary }}
+              className="absolute -bottom-4 -right-4 md:-bottom-6 md:-right-6 w-full h-full rounded-[2rem] md:rounded-[3rem] opacity-20 -z-0"
+              style={{ backgroundColor: brand.colors.accent }}
             ></div>
           </div>
         </div>
 
         {/* Footer Area: Logos & Badges */}
-        <div className="pt-12 md:pt-16 border-t border-white/10">
+        <div className="pt-12 md:pt-16 border-t border-slate-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-10 md:gap-12">
             
             {/* Trust Badges */}
