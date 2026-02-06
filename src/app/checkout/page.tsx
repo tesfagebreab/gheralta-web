@@ -57,7 +57,7 @@ function CheckoutContent() {
         const ids = tourIdParam.split(',').filter(Boolean);
         // Strapi v5 filtering logic - added correct domain filter for consistency
         const filters = ids.map((id, index) => `filters[documentId][$in][${index}]=${id}`).join('&');
-        const query = `${STRAPI_URL}/api/tours?${filters}&filters[domains][name][$containsi]=${SITE_NAME}&populate=*`;
+        const query = `${STRAPI_URL}/api/tours?${filters}&filters[domains][name][$containsi]=${SITE_NAME}&populate=deep`;
         
         const res = await fetch(query, { cache: 'no-store' });
         const json = await res.json();
