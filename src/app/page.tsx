@@ -1,12 +1,12 @@
-// Force Next.js to skip the cache and re-run the logic on every visit
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 import Image from "next/image";
 import Link from "next/link";
 import { Metadata } from "next";
 import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
 import TrustBanner from "@/components/TrustBanner";
+
+// Force Next.js to skip the cache and re-run the logic on every visit
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // --- HELPERS ---
 
@@ -24,17 +24,13 @@ const parseStrapiBlocks = (content: any): string => {
   return "";
 };
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata(): Promise <Metadata> {
+  const brand = getBrand();
+  if (!brand?.docId) return { title: SITE_NAME };
   try {
-    const res = await fetch(
-      `${STRAPI_URL}/api/homepages?filters[domain][name][$containsi]=${SITE_NAME}&populate=deep0`,
-      { cache: 'no-store' }
-    );
-    if (!res.ok) throw new Error("Failed to fetch homepage for metadata");
-
+    const res = await fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[SEO]=*`, { cache: 'no-store' });
     const json = await res.json();
-    const homeData = json.data?.[0]?.attributes || {};
-
+    const homeData = json.data || {};
     const seo = getField(homeData, 'SEO');
     return {
       title: getField(seo, 'meta_title') || getField(homeData, 'Hero_Title') || `${SITE_NAME}`,
@@ -49,13 +45,14 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function Home() {
   const brand = getBrand();
 
+  if (!brand?.docId) {
+    return <div className="p-20 text-center font-black uppercase">Configuration Error: Brand ID Missing.</div>;
+  }
+
   try {
-    // Fetch homepage using correct domain filter (one-to-one relation)
+    // Simplified population: hero_image is a direct media field
     const [homeRes, tourRes] = await Promise.all([
-      fetch(
-        `${STRAPI_URL}/api/homepages?filters[domain][name][$containsi]=${SITE_NAME}&populate=deep`,
-        { cache: 'no-store' }
-      ),
+      fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`, { cache: 'no-store' }),
       fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][name][$containsi]=${SITE_NAME}`, { cache: 'no-store' })
     ]);
 
@@ -63,8 +60,7 @@ export default async function Home() {
 
     const homeJson = await homeRes.json();
     const tourJson = await tourRes.json();
-
-    const homeData = homeJson.data?.[0]?.attributes || {};
+    const homeData = homeJson.data || {};
     const allTours = tourJson.data || [];
 
     // --- Extract Fields ---

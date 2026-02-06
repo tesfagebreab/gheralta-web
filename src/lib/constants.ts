@@ -99,7 +99,7 @@ export const BRANDS = {
   "gheraltatours.com": {
     id: "tours",
     name: "Gheralta Tours",
-    // docId removed — no longer used for direct single-item fetches
+    docId: "zvmy0su5bbhsy9li5uipyzv9", 
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -116,7 +116,7 @@ export const BRANDS = {
   "gheraltaadventures.com": {
     id: "adventures",
     name: "Gheralta Adventures",
-    // docId removed
+    docId: "gas2cz781h3wylgc5s4sqm4w",
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -133,7 +133,7 @@ export const BRANDS = {
   "abuneyemata.com": {
     id: "abuneyemata",
     name: "Abune Yemata",
-    // docId removed
+    docId: "j39unsf7fqpb8q1o0eh7w9lp",
     accent: "text-slate-900",
     bgAccent: "bg-slate-900",
     borderAccent: "border-slate-900",
