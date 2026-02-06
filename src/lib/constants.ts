@@ -120,7 +120,7 @@ export const BRANDS = {
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
-    buttonInHover: "hover:bg-[#9a3412]",
+    buttonHover: "hover:bg-[#9a3412]",
     description: "High-octane rock climbing and trekking.",
     email: "bookings@gheraltaadventures.com",
     nav: [
