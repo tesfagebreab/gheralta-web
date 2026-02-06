@@ -55,9 +55,9 @@ function CheckoutContent() {
       }
       try {
         const ids = tourIdParam.split(',').filter(Boolean);
-        // Strapi v5 filtering logic
+        // Strapi v5 filtering logic - added correct domain filter for consistency
         const filters = ids.map((id, index) => `filters[documentId][$in][${index}]=${id}`).join('&');
-        const query = `${STRAPI_URL}/api/tours?${filters}&populate=*`;
+        const query = `${STRAPI_URL}/api/tours?${filters}&filters[domains][name][$containsi]=${SITE_NAME}&populate=deep`;
         
         const res = await fetch(query, { cache: 'no-store' });
         const json = await res.json();
@@ -129,7 +129,7 @@ function CheckoutContent() {
     return Object.keys(newErrors).length === 0;
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center font-bold text-stone-400 uppercase text-[10px] tracking-widest text-center">Initialising Checkout...</div>;
+  if (loading) return <div className="h-screen flex items-center justify-center font-bold text-xs text-stone-300 bg-[#fafaf9]">PROCESSING...</div>;
 
   if (tours.length === 0) {
     return (
@@ -220,7 +220,7 @@ function CheckoutContent() {
                         
                         <div className="grid grid-cols-2 gap-4 border-t border-stone-50 pt-3">
                           <div className="space-y-1">
-                            <label className="text-[9px] font-black uppercase text-stone-400 tracking-widest">Tour Start Date</label>
+                            <label className="text-[9px] font-black uppercase text-stone-400 tracking-widest px-1">Tour Start Date</label>
                             <input 
                               type="date" 
                               required
@@ -230,7 +230,7 @@ function CheckoutContent() {
                             />
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[9px] font-black uppercase text-stone-400 tracking-widest">Travelers</label>
+                            <label className="text-[9px] font-black uppercase text-stone-400 tracking-widest px-1">Travelers</label>
                             <div className="flex items-center gap-2 bg-stone-50 p-1 rounded-lg w-fit">
                               <button onClick={() => updateTourSelection(idx, 'selectedTravelers', Math.max(1, tour.selectedTravelers - 1))} className="w-6 h-6 bg-white rounded shadow-sm font-bold text-sm hover:bg-stone-100 transition-colors">-</button>
                               <span className="font-bold text-xs px-1">{tour.selectedTravelers}</span>

@@ -39,13 +39,18 @@ const mono = JetBrains_Mono({
 /**
  * Helper to fetch brand-specific assets (Logo, Favicon) from Strapi v5
  */
-async function getBrandAssets(docId: string) {
+async function getBrandAssets() {
   try {
-    const res = await fetch(`${STRAPI_URL}/api/domains/${docId}?populate=*`, {
-      next: { revalidate: 3600 }
-    });
+    // Use filtered list query instead of invalid single-item ID
+    const res = await fetch(
+      `${STRAPI_URL}/api/domains?filters[name][$containsi]=${SITE_NAME}&populate=*`,
+      {
+        next: { revalidate: 3600 }
+      }
+    );
     const json = await res.json();
-    return json.data;
+    // Take the first matching domain (one-to-one relation expected)
+    return json.data?.[0]?.attributes || null;
   } catch (error) {
     console.error("Layout: Failed to fetch brand assets", error);
     return null;
@@ -54,11 +59,11 @@ async function getBrandAssets(docId: string) {
 
 export async function generateMetadata(): Promise<Metadata> {
   const brandConfig = getBrand();
-  const brandData = await getBrandAssets(brandConfig.docId);
+  const brandData = await getBrandAssets();
   
   // Navigate the Strapi v5 media object structure properly
-  const faviconObj = brandData?.attributes?.favicon?.data || brandData?.favicon?.data;
-  const logoObj = brandData?.attributes?.brand_logo?.data || brandData?.brand_logo?.data;
+  const faviconObj = brandData?.favicon?.data;
+  const logoObj = brandData?.brand_logo?.data;
   
   const faviconUrl = getStrapiMedia(faviconObj || logoObj, 'thumbnail') || "/icon.png";
   
