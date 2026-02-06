@@ -130,7 +130,7 @@ export default function TourDetail() {
     async function fetchTour() {
       if (!slug) return;
       try {
-        const query = `${STRAPI_URL}/api/tours?filters[slug][$eq]=${slug}&populate[DailyPlan][populate]=*&populate[pricing_tiers][populate]=*&populate[Gallery][populate]=*&populate[destinations][populate]=*&populate[types][populate]=*&populate[tags][populate]=*`;
+        const query = `${STRAPI_URL}/api/tours?filters[slug][$eq]=${slug}&populate[DailyPlan][populate]=*&populate[pricing_tiers][populate]=*&populate[Gallery]=*&populate[destinations][populate]=*&populate[types][populate]=*&populate[tags][populate]=*`;
         const response = await fetch(query, { cache: "no-store" });
         const json = await response.json();
         const rawEntry = json.data?.[0];

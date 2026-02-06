@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // We use $eqi (case-insensitive) to be as flexible as possible
     const queryParams = [
       `filters[slug][$eqi]=${encodeURIComponent(slug)}`,
-      `populate[Gallery][populate]=*`, 
+      `populate[Gallery]=*`, 
       `populate[seo][populate]=*`
     ];
     
