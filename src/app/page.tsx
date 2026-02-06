@@ -27,7 +27,7 @@ const parseStrapiBlocks = (content: any): string => {
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const res = await fetch(
-      `${STRAPI_URL}/api/homepages?filters[domain][name][$containsi]=${SITE_NAME}&populate=deep`,
+      `${STRAPI_URL}/api/homepages?filters[domain][name][$containsi]=${SITE_NAME}&populate=*`,
       { cache: 'no-store' }
     );
     if (!res.ok) throw new Error("Failed to fetch homepage for metadata");
@@ -53,7 +53,7 @@ export default async function Home() {
     // Fetch homepage using correct domain filter (one-to-one relation)
     const [homeRes, tourRes] = await Promise.all([
       fetch(
-        `${STRAPI_URL}/api/homepages?filters[domain][name][$containsi]=${SITE_NAME}&populate=deep`,
+        `${STRAPI_URL}/api/homepages?filters[domain][name][$containsi]=${SITE_NAME}&populate=*`,
         { cache: 'no-store' }
       ),
       fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][name][$containsi]=${SITE_NAME}`, { cache: 'no-store' })
