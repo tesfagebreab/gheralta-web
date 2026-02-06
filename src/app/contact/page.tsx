@@ -29,7 +29,7 @@ const parseStrapiBlocks = (content: any): string => {
 export async function generateMetadata(): Promise<Metadata> {
   try {
     // Using containsi for flexible domain matching in Strapi v5
-    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$containsi]=${SITE_NAME}&populate=seo.meta_image`, { 
+    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$containsi]=${SITE_NAME}`, { 
       cache: 'no-store'
     });
     const json = await res.json();

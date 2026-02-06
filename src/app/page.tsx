@@ -24,13 +24,17 @@ const parseStrapiBlocks = (content: any): string => {
   return "";
 };
 
-export async function generateMetadata(): Promise <Metadata> {
-  const brand = getBrand();
-  if (!brand?.docId) return { title: SITE_NAME };
+export async function generateMetadata(): Promise<Metadata> {
   try {
-    const res = await fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[SEO]=*`, { cache: 'no-store' });
+    const res = await fetch(
+      `${STRAPI_URL}/api/homepages?filters[domain][name][$containsi]=${SITE_NAME}&populate=deep`,
+      { cache: 'no-store' }
+    );
+    if (!res.ok) throw new Error("Failed to fetch homepage for metadata");
+
     const json = await res.json();
-    const homeData = json.data || {};
+    const homeData = json.data?.[0]?.attributes || {};
+
     const seo = getField(homeData, 'SEO');
     return {
       title: getField(seo, 'meta_title') || getField(homeData, 'Hero_Title') || `${SITE_NAME}`,
@@ -45,22 +49,22 @@ export async function generateMetadata(): Promise <Metadata> {
 export default async function Home() {
   const brand = getBrand();
 
-  if (!brand?.docId) {
-    return <div className="p-20 text-center font-black uppercase">Configuration Error: Brand ID Missing.</div>;
-  }
-
   try {
-    // Simplified population: hero_image is a direct media field
+    // Fetch homepage using correct domain filter (one-to-one relation)
     const [homeRes, tourRes] = await Promise.all([
-      fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`, { cache: 'no-store' }),
-      fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][domain][$containsi]=${SITE_NAME}`, { cache: 'no-store' })
+      fetch(
+        `${STRAPI_URL}/api/homepages?filters[domain][name][$containsi]=${SITE_NAME}&populate=deep`,
+        { cache: 'no-store' }
+      ),
+      fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][name][$containsi]=${SITE_NAME}`, { cache: 'no-store' })
     ]);
 
     if (!homeRes.ok) throw new Error("Failed to fetch Homepage");
 
     const homeJson = await homeRes.json();
     const tourJson = await tourRes.json();
-    const homeData = homeJson.data || {};
+
+    const homeData = homeJson.data?.[0]?.attributes || {};
     const allTours = tourJson.data || [];
 
     // --- Extract Fields ---
@@ -225,7 +229,7 @@ export default async function Home() {
                              Explore
                            </span>
                          </Link>
-                       </div>
+                       </divouracil>
                      </div>
                    </div>
                  );

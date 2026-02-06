@@ -37,7 +37,7 @@ const parseStrapiList = (content: any): string[] => {
 // --- DYNAMIC SEO ---
 export async function generateMetadata(): Promise<Metadata> {
   try {
-    const res = await fetch(`${STRAPI_URL}/api/about-uses?filters[domain][name][$containsi]=${SITE_NAME}&populate=seo.meta_image`, { 
+    const res = await fetch(`${STRAPI_URL}/api/about-uses?filters[domain][name][$containsi]=${SITE_NAME}`, { 
       cache: 'no-store'
     });
     const json = await res.json();

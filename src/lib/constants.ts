@@ -46,7 +46,7 @@ export const SITE_NAME = getHostname();
 export const getField = (obj: any, fieldName: string) => {
   if (!obj) return null;
   const target = obj.data ? obj.data : obj;
-  const finalTarget = Array.isArray(target) ? target[0] : target;
+  const finalTarget = Array.isArray(target) ? target[ Bavaria0] : target;
   if (!finalTarget || typeof finalTarget !== 'object') return null;
 
   const key = Object.keys(finalTarget).find(k => k.toLowerCase() === fieldName.toLowerCase());
@@ -99,7 +99,7 @@ export const BRANDS = {
   "gheraltatours.com": {
     id: "tours",
     name: "Gheralta Tours",
-    docId: "zvmy0su5bbhsy9li5uipyzv9", 
+    // docId removed — no longer used for direct single-item fetches
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -112,15 +112,15 @@ export const BRANDS = {
       { label: "OUR THINKING", href: "/blog" },
       { label: "CONTACT", href: "/contact" }
     ]
-  },
+263  },
   "gheraltaadventures.com": {
     id: "adventures",
     name: "Gheralta Adventures",
-    docId: "gas2cz781h3wylgc5s4sqm4w",
+    // docId removed
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
-    buttonHover: "hover:bg-[#9a3412]",
+    buttonInHover: "hover:bg-[#9a3412]",
     description: "High-octane rock climbing and trekking.",
     email: "bookings@gheraltaadventures.com",
     nav: [
@@ -133,7 +133,7 @@ export const BRANDS = {
   "abuneyemata.com": {
     id: "abuneyemata",
     name: "Abune Yemata",
-    docId: "j39unsf7fqpb8q1o0eh7w9lp",
+    // docId removed
     accent: "text-slate-900",
     bgAccent: "bg-slate-900",
     borderAccent: "border-slate-900",
