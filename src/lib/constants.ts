@@ -46,7 +46,7 @@ export const SITE_NAME = getHostname();
 export const getField = (obj: any, fieldName: string) => {
   if (!obj) return null;
   const target = obj.data ? obj.data : obj;
-  const finalTarget = Array.isArray(target) ? target[ Bavaria0] : target;
+  const finalTarget = Array.isArray(target) ? target[0] : target;
   if (!finalTarget || typeof finalTarget !== 'object') return null;
 
   const key = Object.keys(finalTarget).find(k => k.toLowerCase() === fieldName.toLowerCase());
@@ -112,7 +112,7 @@ export const BRANDS = {
       { label: "OUR THINKING", href: "/blog" },
       { label: "CONTACT", href: "/contact" }
     ]
-263  },
+  },
   "gheraltaadventures.com": {
     id: "adventures",
     name: "Gheralta Adventures",

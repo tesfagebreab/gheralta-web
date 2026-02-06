@@ -229,7 +229,7 @@ export default async function Home() {
                              Explore
                            </span>
                          </Link>
-                       </divouracil>
+                       </div>
                      </div>
                    </div>
                  );
