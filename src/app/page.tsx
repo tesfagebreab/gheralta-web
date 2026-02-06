@@ -1,12 +1,12 @@
+// Force Next.js to skip the cache and re-run the logic on every visit
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import Image from "next/image";
 import Link from "next/link";
 import { Metadata } from "next";
 import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
 import TrustBanner from "@/components/TrustBanner";
-
-// Force Next.js to skip the cache and re-run the logic on every visit
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 // --- HELPERS ---
 
@@ -27,7 +27,7 @@ const parseStrapiBlocks = (content: any): string => {
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const res = await fetch(
-      `${STRAPI_URL}/api/homepages?filters[domain][name][$containsi]=${SITE_NAME}&populate=deep`,
+      `${STRAPI_URL}/api/homepages?filters[domain][name][$containsi]=${SITE_NAME}&populate=deep0`,
       { cache: 'no-store' }
     );
     if (!res.ok) throw new Error("Failed to fetch homepage for metadata");
