@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const queryParams = [
       `filters[slug][$eqi]=${encodeURIComponent(slug)}`,
       `populate[Gallery]=*`, 
-      `populate[seo][populate]=*`
+      `populate[SEO][populate]=*`
     ];
     
     const query = `${STRAPI_URL}/api/tours?${queryParams.join('&')}`;

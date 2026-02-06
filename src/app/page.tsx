@@ -1,12 +1,12 @@
+// Force Next.js to skip the cache and re-run the logic on every visit
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import Image from "next/image";
 import Link from "next/link";
 import { Metadata } from "next";
 import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
 import TrustBanner from "@/components/TrustBanner";
-
-// Force Next.js to skip the cache and re-run the logic on every visit
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 // --- HELPERS ---
 
@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise <Metadata> {
   const brand = getBrand();
   if (!brand?.docId) return { title: SITE_NAME };
   try {
-    const res = await fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[SEO]=*`, { cache: 'no-store' });
+    const res = await fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[seo]=*`, { cache: 'no-store' });
     const json = await res.json();
     const homeData = json.data || {};
     const seo = getField(homeData, 'SEO');
