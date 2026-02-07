@@ -87,7 +87,7 @@ export default async function Footer() {
         <div className="flex flex-col items-center md:items-start text-center md:text-left">
           <h3 className="text-xs font-black uppercase tracking-[0.3em] text-stone-500 mb-6">Explore</h3>
           <ul className="space-y-4">
-            {brand.nav.map(link => (
+            {brand.nav.map((link: { label: string; href: string }) => (
               <li key={link.href}>
                 <Link 
                   href={link.href} 
