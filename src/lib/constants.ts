@@ -82,30 +82,6 @@ export const getStrapiMedia = (media: any, format: 'small' | 'medium' | 'thumbna
 
 export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
 
-
-/**
- * getDynamicBrand (Async) - CRITICAL FOR DATA FETCHING
- * This gets the real docId from Strapi so Railway never fails.
- */
-export async function getDynamicBrand() {
-  const baseBrand = getBrand();
-  try {
-    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq] =${SITE_NAME}`, {
-      next: { revalidate: 3600 }
-    });
-    const json = await res.json();
-    const realDocId = json.data?.[0]?.documentId || json.data?.[0]?.id;
-
-    return {
-      ...baseBrand,
-      docId: realDocId || baseBrand.docId // Fallback to hardcoded if Strapi is down
-    };
-  } catch (error) {
-    console.error("Dynamic Brand Fetch Error:", error);
-    return baseBrand;
-  }
-}
-
 /**
  * BRAND ATTRIBUTES 
  * Note: These docIds are fallbacks for local dev.
@@ -181,6 +157,32 @@ export const getBrand = () => {
     }
   };
 };
+
+/**
+ * getDynamicBrand (Async) - CRITICAL FOR DATA FETCHING
+ * This gets the real HOMEPAGE docId from Strapi so Railway never fails.
+ * UPDATED: Fetches 'homepages' instead of 'domains' to satisfy page.tsx requirements.
+ */
+export async function getDynamicBrand() {
+  const baseBrand = getBrand();
+  try {
+    // FIX: We now fetch the HOMEPAGE associated with this domain name.
+    // This ensures brand.docId is the Homepage ID, which page.tsx expects.
+    const res = await fetch(`${STRAPI_URL}/api/homepages?filters[domain][name][$eq]=${SITE_NAME}`, {
+      next: { revalidate: 3600 }
+    });
+    const json = await res.json();
+    const realDocId = json.data?.[0]?.documentId || json.data?.[0]?.id;
+
+    return {
+      ...baseBrand,
+      docId: realDocId || baseBrand.docId // Fallback to hardcoded if Strapi is down
+    };
+  } catch (error) {
+    console.error("Dynamic Brand Fetch Error:", error);
+    return baseBrand;
+  }
+}
 
 /**
  * CONTACT_INFO
