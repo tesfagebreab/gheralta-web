@@ -5,35 +5,40 @@
  */
 const getStrapiURL = () => {
   const url = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
-  if (url.includes("localhost") || url.includes("127.0.0.1") || url.startsWith("http")) {
-    return url;
-  }
-  return `https://${url}`;
+  return url.startsWith("http") ? url : `https://${url}`;
 };
+
 export const STRAPI_URL = getStrapiURL();
 export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.dev";
+
 /**
- * SITE_NAME logic
+ * SITE_NAME logic - Safely handles Server and Client
+ * This allows the backend to know which domain is being requested.
  */
-const getHostname = () => {
-  const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
- 
-  if (process.env.NODE_ENV === 'development' && envSite) {
-    return envSite.toLowerCase();
-  }
+export const SITE_NAME = (() => {
+  // 1. Client-side check (Safe for Browser)
   if (typeof window !== "undefined") {
-    const host = window.location.hostname.replace("www.", "").toLowerCase();
-    if (host === "localhost" || host === "127.0.0.1") {
-       return (envSite || "gheraltatours.com").toLowerCase();
-    }
-    return host;
+    return window.location.hostname.replace("www.", "").toLowerCase();
   }
- 
-  // Improved fallback for SSR/production — log warning instead of hardcoding one brand
-  console.warn("SITE_NAME fallback triggered in SSR — check custom domain setup or headers. Using env fallback.");
-  return (envSite || "gheraltatours.com").toLowerCase(); // Keep as temporary, but log
-};
-export const SITE_NAME = getHostname();
+
+  // 2. Server-side check using dynamic require to prevent build-time/client crashes
+  try {
+    const { headers } = require('next/headers');
+    const headersList = headers();
+    const host = headersList.get('x-forwarded-host') || headersList.get('host') || "";
+    
+    const domain = host.replace("www.", "").split(":")[0].toLowerCase();
+    
+    return domain || process.env.NEXT_PUBLIC_SITE_NAME || "gheraltatours.com";
+  } catch (e) {
+    // Fallback for build phase or errors
+    return (process.env.NEXT_PUBLIC_SITE_NAME || "gheraltatours.com").toLowerCase();
+  }
+})();
+
+// Helper to determine if we are on a specific brand
+export const isBrand = (domain: string) => SITE_NAME.includes(domain);
+
 /**
  * THE NORMALIZATION HELPER
  */
@@ -42,14 +47,17 @@ export const getField = (obj: any, fieldName: string) => {
   const target = obj.data ? obj.data : obj;
   const finalTarget = Array.isArray(target) ? target[0] : target;
   if (!finalTarget || typeof finalTarget !== 'object') return null;
+
   const key = Object.keys(finalTarget).find(k => k.toLowerCase() === fieldName.toLowerCase());
   if (!key) return null;
+
   const value = finalTarget[key];
   if (value && typeof value === 'object' && value !== null && 'data' in value) {
     return value.data;
   }
   return value;
 };
+
 /**
  * UNIVERSAL IMAGE HELPER
  */
@@ -73,16 +81,18 @@ export const getStrapiMedia = (media: any, format: 'small' | 'medium' | 'thumbna
   }
   return `${STRAPI_URL}${url.startsWith('/') ? '' : '/'}${url}`;
 };
+
 export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
+
 /**
- * BRAND ATTRIBUTES
- * Note: docId removed — use filtered queries instead
+ * BRAND ATTRIBUTES 
+ * Explicitly typed to support dynamic access
  */
-export const BRANDS = {
+export const BRANDS: Record<string, any> = {
   "gheraltatours.com": {
     id: "tours",
-    docId: null,
     name: "Gheralta Tours",
+    docId: null, 
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -98,8 +108,8 @@ export const BRANDS = {
   },
   "gheraltaadventures.com": {
     id: "adventures",
-    docId: null,
     name: "Gheralta Adventures",
+    docId: null,
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -115,8 +125,8 @@ export const BRANDS = {
   },
   "abuneyemata.com": {
     id: "abuneyemata",
-    docId: null,
     name: "Abune Yemata",
+    docId: null,
     accent: "text-slate-900",
     bgAccent: "bg-slate-900",
     borderAccent: "border-slate-900",
@@ -131,16 +141,14 @@ export const BRANDS = {
     ]
   }
 };
+
 /**
  * getBrand (Static) - Keep for Layouts/Styles
  */
 export const getBrand = () => {
   const match = Object.keys(BRANDS).find(key => key === SITE_NAME);
-  if (!match) {
-    console.warn(`No brand match for SITE_NAME: ${SITE_NAME} — using default gheraltatours.com (check custom domain/DNS)`);
-  }
   const brand = match ? BRANDS[match as keyof typeof BRANDS] : BRANDS["gheraltatours.com"];
- 
+  
   return {
     ...brand,
     colors: {
@@ -151,32 +159,36 @@ export const getBrand = () => {
     }
   };
 };
+
 /**
- * getDynamicBrand (Async) - For data fetching (not needed if all pages use filtered queries)
- * Keep but update to use [name] filter
+ * getDynamicBrand (Async)
+ * Fetches the documentId for the current domain record in Strapi
  */
 export async function getDynamicBrand() {
   const baseBrand = getBrand();
   try {
-    const res = await fetch(`${STRAPI_URL}/api/homepages?filters[domain][name][$eq]=${SITE_NAME}&populate=*`, {
+    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${SITE_NAME}`, {
       next: { revalidate: 3600 }
     });
-   
+    
     const json = await res.json();
-   
-    const homePageDocId = json.data?.[0]?.documentId || json.data?.[0]?.id;
-    if (!homePageDocId) {
-       console.warn(`No homepage found for domain: ${SITE_NAME}`);
+    const domainDocId = json.data?.[0]?.documentId;
+
+    if (!domainDocId) {
+       console.warn(`[Constants] No Strapi domain record found for: ${SITE_NAME}`);
     }
+
     return {
       ...baseBrand,
-      docId: homePageDocId || baseBrand.docId // fallback removed since docId gone
+      docId: domainDocId || baseBrand.docId
     };
+    
   } catch (error) {
-    console.error("Dynamic Brand Fetch Error:", error);
+    console.error("[Constants] Dynamic Brand Fetch Error:", error);
     return baseBrand;
   }
 }
+
 /**
  * CONTACT_INFO
  */
@@ -189,13 +201,15 @@ export async function getDynamicContact() {
       address: "Hawzen, Tigray, Ethiopia",
     };
   }
+
   try {
-    const res = await fetch(`${STRAPI_URL}/api/contact-infos?populate=domain`, {
+    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$eq]=${SITE_NAME}`, { 
       next: { revalidate: 3600 },
       headers: { 'Content-Type': 'application/json' }
     });
     const json = await res.json();
-    const myContact = json.data?.find((c: any) => c.domain?.name?.toLowerCase() === SITE_NAME.toLowerCase());
+    const myContact = json.data?.[0];
+
     if (!myContact) {
       return {
         phone: "+251 928714272",
