@@ -2,15 +2,12 @@
 
 /**
  * STRAPI_URL Sanitizer
- * Ensures the URL always has https:// even if the environment variable is missing it.
  */
 const getStrapiURL = () => {
   const url = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
-  // If it's a local address or already has a protocol, return as is
   if (url.includes("localhost") || url.includes("127.0.0.1") || url.startsWith("http")) {
     return url;
   }
-  // Otherwise, force https (Fix for Railway ERR_INVALID_URL)
   return `https://${url}`;
 };
 
@@ -18,7 +15,7 @@ export const STRAPI_URL = getStrapiURL();
 export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.dev";
 
 /**
- * SITE_NAME logic: Detects the domain to apply brand-specific styling.
+ * SITE_NAME logic
  */
 const getHostname = () => {
   const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
@@ -64,36 +61,30 @@ export const getField = (obj: any, fieldName: string) => {
  */
 export const getStrapiMedia = (media: any, format: 'small' | 'medium' | 'thumbnail' | 'large' | 'original' = 'original') => {
   if (!media) return null;
-
   const rawData = media.data ? media.data : media;
   const item = Array.isArray(rawData) ? rawData[0] : rawData;
   if (!item) return null;
-
   const data = item.attributes ? item.attributes : item;
   let url = data.url;
-
   if (format !== 'original' && data.formats && data.formats[format]) {
     url = data.formats[format].url;
   }
-
   if (!url) return null;
-
   if (url.includes('undefined/')) {
     const fileName = url.split('undefined/')[1];
     return `${R2_PUBLIC_URL}/${fileName}`;
   }
-
   if (url.startsWith('http') || url.startsWith('//')) {
     return url;
   }
-
   return `${STRAPI_URL}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
 export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
 
 /**
- * BRAND ATTRIBUTES
+ * BRAND ATTRIBUTES (Styles & Config)
+ * Note: docId here is now just a fallback. 
  */
 export const BRANDS = {
   "gheraltatours.com": {
@@ -149,6 +140,28 @@ export const BRANDS = {
   }
 };
 
+/**
+ * NEW: DYNAMIC DOMAIN FETCHING
+ * Use this in your pages to get the REAL docId from Strapi
+ */
+export async function getDynamicDomain() {
+  try {
+    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${SITE_NAME}`, {
+      next: { revalidate: 3600 }
+    });
+    const json = await res.json();
+    // In Strapi v5, the ID is often in 'documentId' or 'id'
+    const domainData = json.data?.[0];
+    return {
+      docId: domainData?.documentId || domainData?.id,
+      ...domainData
+    };
+  } catch (error) {
+    console.error("Error fetching dynamic domain:", error);
+    return null;
+  }
+}
+
 export const getBrand = () => {
   const match = Object.keys(BRANDS).find(key => key === SITE_NAME);
   const brand = match ? BRANDS[match as keyof typeof BRANDS] : BRANDS["gheraltatours.com"];
@@ -168,9 +181,7 @@ export const getBrand = () => {
  * CONTACT_INFO (Dynamic & Relation-Aware)
  */
 export async function getDynamicContact() {
-  // Guard check to ensure URL is valid before fetching
   if (!STRAPI_URL || STRAPI_URL.includes('undefined')) {
-    console.error("Fetch skipped: STRAPI_URL is invalid.");
     return {
       phone: "+251 928714272",
       whatsapp: "https://wa.me/251928714272",
@@ -210,7 +221,6 @@ export async function getDynamicContact() {
       maps: myContact.Maps_Link
     };
   } catch (error) {
-    console.error("Dynamic Contact Fetch Error:", error);
     return {
       phone: "+251 928714272",
       whatsapp: "https://wa.me/251928714272",
