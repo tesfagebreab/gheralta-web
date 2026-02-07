@@ -90,7 +90,7 @@ export const BRANDS = {
   "gheraltatours.com": {
     id: "tours",
     name: "Gheralta Tours",
-   // docId: "zvmy0su5bbhsy9li5uipyzv9", 
+    docId: "zvmy0su5bbhsy9li5uipyzv9", 
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -107,7 +107,7 @@ export const BRANDS = {
   "gheraltaadventures.com": {
     id: "adventures",
     name: "Gheralta Adventures",
-    //docId: "gas2cz781h3wylgc5s4sqm4w",
+    docId: "gas2cz781h3wylgc5s4sqm4w",
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -124,7 +124,7 @@ export const BRANDS = {
   "abuneyemata.com": {
     id: "abuneyemata",
     name: "Abune Yemata",
-    //docId: "j39unsf7fqpb8q1o0eh7w9lp",
+    docId: "j39unsf7fqpb8q1o0eh7w9lp",
     accent: "text-slate-900",
     bgAccent: "bg-slate-900",
     borderAccent: "border-slate-900",
@@ -167,18 +167,24 @@ export async function getDynamicBrand() {
   const baseBrand = getBrand();
   try {
     // 1. Fetch the Homepage that is linked to the current domain name
+    // We filter by domain name so it works across all your brands
     const res = await fetch(`${STRAPI_URL}/api/homepages?filters[domain][name][$eq]=${SITE_NAME}`, {
       next: { revalidate: 3600 }
     });
     
     const json = await res.json();
     
-    // 2. Get the ID of the HOME PAGE record, not the Domain record
+    // 2. Get the documentId of the HOME PAGE record
     const homePageDocId = json.data?.[0]?.documentId || json.data?.[0]?.id;
+
+    if (!homePageDocId) {
+       console.warn(`No homepage found for domain: ${SITE_NAME}`);
+    }
 
     return {
       ...baseBrand,
-      docId: homePageDocId || baseBrand.docId // Use the Homepage ID as the docId
+      // We overwrite docId with the REAL Homepage ID from Strapi
+      docId: homePageDocId || baseBrand.docId 
     };
   } catch (error) {
     console.error("Dynamic Brand Fetch Error:", error);
