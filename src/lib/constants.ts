@@ -160,23 +160,25 @@ export const getBrand = () => {
 
 /**
  * getDynamicBrand (Async) - CRITICAL FOR DATA FETCHING
- * This gets the real HOMEPAGE docId from Strapi so Railway never fails.
- * UPDATED: Fetches 'homepages' instead of 'domains' to satisfy page.tsx requirements.
+ * This gets the HOME PAGE'S documentId for the current domain
+ * so existing page fetches like /api/homepages/${brand.docId} work.
  */
 export async function getDynamicBrand() {
   const baseBrand = getBrand();
   try {
-    // FIX: We now fetch the HOMEPAGE associated with this domain name.
-    // This ensures brand.docId is the Homepage ID, which page.tsx expects.
+    // 1. Fetch the Homepage that is linked to the current domain name
     const res = await fetch(`${STRAPI_URL}/api/homepages?filters[domain][name][$eq]=${SITE_NAME}`, {
       next: { revalidate: 3600 }
     });
+    
     const json = await res.json();
-    const realDocId = json.data?.[0]?.documentId || json.data?.[0]?.id;
+    
+    // 2. Get the ID of the HOME PAGE record, not the Domain record
+    const homePageDocId = json.data?.[0]?.documentId || json.data?.[0]?.id;
 
     return {
       ...baseBrand,
-      docId: realDocId || baseBrand.docId // Fallback to hardcoded if Strapi is down
+      docId: homePageDocId || baseBrand.docId // Use the Homepage ID as the docId
     };
   } catch (error) {
     console.error("Dynamic Brand Fetch Error:", error);
