@@ -13,6 +13,7 @@ export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.de
 
 /**
  * SITE_NAME logic - Safely handles Server and Client
+ * This allows the backend to know which domain is being requested.
  */
 export const SITE_NAME = (() => {
   // 1. Client-side check (Safe for Browser)
@@ -20,14 +21,17 @@ export const SITE_NAME = (() => {
     return window.location.hostname.replace("www.", "").toLowerCase();
   }
 
-  // 2. Server-side check (using a dynamic require to prevent Client-side crashes)
+  // 2. Server-side check using dynamic require to prevent build-time/client crashes
   try {
     const { headers } = require('next/headers');
-    const host = headers().get('host') || "";
-    return host.replace("www.", "").split(":")[0].toLowerCase() || 
-           process.env.NEXT_PUBLIC_SITE_NAME || 
-           "gheraltatours.com";
+    const headersList = headers();
+    const host = headersList.get('x-forwarded-host') || headersList.get('host') || "";
+    
+    const domain = host.replace("www.", "").split(":")[0].toLowerCase();
+    
+    return domain || process.env.NEXT_PUBLIC_SITE_NAME || "gheraltatours.com";
   } catch (e) {
+    // Fallback for build phase or errors
     return (process.env.NEXT_PUBLIC_SITE_NAME || "gheraltatours.com").toLowerCase();
   }
 })();
@@ -82,6 +86,7 @@ export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
 
 /**
  * BRAND ATTRIBUTES 
+ * Explicitly typed to support dynamic access
  */
 export const BRANDS: Record<string, any> = {
   "gheraltatours.com": {
@@ -138,7 +143,7 @@ export const BRANDS: Record<string, any> = {
 };
 
 /**
- * getBrand (Static)
+ * getBrand (Static) - Keep for Layouts/Styles
  */
 export const getBrand = () => {
   const match = Object.keys(BRANDS).find(key => key === SITE_NAME);
@@ -157,6 +162,7 @@ export const getBrand = () => {
 
 /**
  * getDynamicBrand (Async)
+ * Fetches the documentId for the current domain record in Strapi
  */
 export async function getDynamicBrand() {
   const baseBrand = getBrand();
@@ -168,12 +174,17 @@ export async function getDynamicBrand() {
     const json = await res.json();
     const domainDocId = json.data?.[0]?.documentId;
 
+    if (!domainDocId) {
+       console.warn(`[Constants] No Strapi domain record found for: ${SITE_NAME}`);
+    }
+
     return {
       ...baseBrand,
       docId: domainDocId || baseBrand.docId
     };
     
   } catch (error) {
+    console.error("[Constants] Dynamic Brand Fetch Error:", error);
     return baseBrand;
   }
 }
