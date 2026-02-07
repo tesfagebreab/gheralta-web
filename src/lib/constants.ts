@@ -5,10 +5,7 @@
  */
 const getStrapiURL = () => {
   const url = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
-  if (url.includes("localhost") || url.includes("127.0.0.1") || url.startsWith("http")) {
-    return url;
-  }
-  return `https://${url}`;
+  return url.startsWith("http") ? url : `https://${url}`;
 };
 
 export const STRAPI_URL = getStrapiURL();
@@ -17,25 +14,15 @@ export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.de
 /**
  * SITE_NAME logic
  */
-const getHostname = () => {
-  const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
-  
-  if (process.env.NODE_ENV === 'production' && envSite) {
-    return envSite.toLowerCase();
-  }
-
+export const SITE_NAME = (() => {
   if (typeof window !== "undefined") {
-    const host = window.location.hostname.replace("www.", "").toLowerCase();
-    if (host === "localhost" || host === "127.0.0.1") {
-       return (envSite || "gheraltatours.com").toLowerCase();
-    }
-    return host;
+    return window.location.hostname.replace("www.", "").toLowerCase();
   }
-  
-  return (envSite || "gheraltatours.com").toLowerCase();
-};
+  return (process.env.NEXT_PUBLIC_SITE_NAME || "gheraltatours.com").toLowerCase();
+})();
 
-export const SITE_NAME = getHostname();
+// Helper to determine if we are on a specific brand
+export const isBrand = (domain: string) => SITE_NAME.includes(domain);
 
 /**
  * THE NORMALIZATION HELPER
@@ -90,7 +77,8 @@ export const BRANDS = {
   "gheraltatours.com": {
     id: "tours",
     name: "Gheralta Tours",
-    docId: "zvmy0su5bbhsy9li5uipyzv9", 
+    //docId: "zvmy0su5bbhsy9li5uipyzv9", 
+    docId: null, // Initialized as null
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -107,7 +95,8 @@ export const BRANDS = {
   "gheraltaadventures.com": {
     id: "adventures",
     name: "Gheralta Adventures",
-    docId: "gas2cz781h3wylgc5s4sqm4w",
+    //docId: "gas2cz781h3wylgc5s4sqm4w",
+    docId: null, // Initialized as null
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -124,7 +113,8 @@ export const BRANDS = {
   "abuneyemata.com": {
     id: "abuneyemata",
     name: "Abune Yemata",
-    docId: "j39unsf7fqpb8q1o0eh7w9lp",
+    //docId: "j39unsf7fqpb8q1o0eh7w9lp",
+    docId: null, // Initialized as null
     accent: "text-slate-900",
     bgAccent: "bg-slate-900",
     borderAccent: "border-slate-900",
@@ -168,24 +158,27 @@ export async function getDynamicBrand() {
   try {
     // 1. Fetch the Homepage that is linked to the current domain name
     // We filter by domain name so it works across all your brands
-    const res = await fetch(`${STRAPI_URL}/api/homepages?filters[domain][name][$eq]=${SITE_NAME}`, {
+    
+    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${SITE_NAME}`, {
       next: { revalidate: 3600 }
+
     });
     
-    const json = await res.json();
-    
-    // 2. Get the documentId of the HOME PAGE record
-    const homePageDocId = json.data?.[0]?.documentId || json.data?.[0]?.id;
+const json = await res.json();
 
-    if (!homePageDocId) {
+    // 2. Get the documentId of the HOME PAGE record
+const domainDocId = json.data?.[0]?.documentId;
+
+    if (!domainDocId) {
        console.warn(`No homepage found for domain: ${SITE_NAME}`);
     }
 
     return {
       ...baseBrand,
       // We overwrite docId with the REAL Homepage ID from Strapi
-      docId: homePageDocId
+      docId: domainDocId || baseBrand.docId
     };
+    
   } catch (error) {
     console.error("Dynamic Brand Fetch Error:", error);
     return baseBrand;
