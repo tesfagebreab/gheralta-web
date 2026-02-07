@@ -33,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
   try {
     // CHANGE: Use filter instead of ID in the path
     const res = await fetch(
-      `${STRAPI_URL}/api/homepages?filters[name][documentId][$eq]=${brand.docId}&populate[seo]=*`, 
+      `${STRAPI_URL}/api/homepages?filters[domain][documentId][$eq]=${brand.docId}&populate[seo]=*`, 
       { cache: 'no-store' }
     );
     
@@ -66,7 +66,7 @@ const brand = await getDynamicBrand();
   try {
     // Simplified population: hero_image is a direct media field
     const [homeRes, tourRes] = await Promise.all([
-      fetch(`${STRAPI_URL}/api/homepages?filters[name][documentId][$eq]=${brand.docId}&populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`,  { cache: 'no-store' }),
+      fetch(`${STRAPI_URL}/api/homepages?filters[domain][documentId][$eq]=${brand.docId}&populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`,  { cache: 'no-store' }),
       
       fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][name][$eq]=${SITE_NAME}`, { cache: 'no-store' })
     ]);
