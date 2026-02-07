@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import {getDynamicBrand, getDynamicContact, SITE_NAME, STRAPI_URL, getStrapiMedia } from '@/lib/constants';
+import { getBrand, getDynamicContact, SITE_NAME, STRAPI_URL, getStrapiMedia } from '@/lib/constants';
 
 // Helper to prevent "Objects are not valid as React child" for the address field
 const parseStrapiBlocks = (content: any): string => {
@@ -18,7 +18,7 @@ const parseStrapiBlocks = (content: any): string => {
 };
 
 export default async function Footer() {
-  const brand = await getDynamicBrand();
+  const brand = getBrand();
   
   let contact = { phone: "", address: "", whatsapp: "" };
   let logoUrl: string | null = null;
@@ -87,7 +87,7 @@ export default async function Footer() {
         <div className="flex flex-col items-center md:items-start text-center md:text-left">
           <h3 className="text-xs font-black uppercase tracking-[0.3em] text-stone-500 mb-6">Explore</h3>
           <ul className="space-y-4">
-            {brand.nav.map((link: { label: string; href: string }) => (
+            {brand.nav.map(link => (
               <li key={link.href}>
                 <Link 
                   href={link.href} 

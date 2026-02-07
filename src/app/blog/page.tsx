@@ -1,13 +1,13 @@
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { STRAPI_URL, getDynamicBrand, SITE_NAME, getField, getStrapiMedia } from "@/lib/constants";
+import { STRAPI_URL, getBrand, SITE_NAME, getField, getStrapiMedia } from "@/lib/constants";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = await getDynamicBrand();
+  const brand = getBrand();
   return {
     title: `Our Thinking | ${brand.name}`,
     description: `Stories, guides, and insights from the heart of the Gheralta Mountains with ${brand.name}.`,
@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BlogPage() {
-  const brand = await getDynamicBrand();
+  const brand = getBrand();
 
   try {
     const res = await fetch(

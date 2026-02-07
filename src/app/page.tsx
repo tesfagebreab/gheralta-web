@@ -1,12 +1,13 @@
+import Image from "next/image";
+import Link from "next/link";
+import { Metadata } from "next";
+import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
+import TrustBanner from "@/components/TrustBanner";
+
 // Force Next.js to skip the cache and re-run the logic on every visit
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-import Image from "next/image";
-import Link from "next/link";
-import { Metadata } from "next";
-import { STRAPI_URL, SITE_NAME, getDynamicBrand, getField, getStrapiMedia } from "@/lib/constants";
-import TrustBanner from "@/components/TrustBanner";
 
 // --- HELPERS ---
 
@@ -24,26 +25,14 @@ const parseStrapiBlocks = (content: any): string => {
   return "";
 };
 
-export async function generateMetadata(): Promise<Metadata> {
-  const brand = await getDynamicBrand();
-
+export async function generateMetadata(): Promise <Metadata> {
+  const brand = getBrand();
   if (!brand?.docId) return { title: SITE_NAME };
-
   try {
-    // CHANGE: Use filter instead of ID in the path
-    const res = await fetch(
-      `${STRAPI_URL}/api/homepages?filters[domain][documentId][$eq]=${brand.docId}&populate[seo]=*`, 
-      { cache: 'no-store' }
-    );
-    
+    const res = await fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[seo]=*`, { cache: 'no-store' });
     const json = await res.json();
-    
-    // homeData will be the object inside the data array
-    const homeData = json.data || {}; 
-    
-    // getField handles the array automatically
+    const homeData = json.data || {};
     const seo = getField(homeData, 'SEO');
-
     return {
       title: getField(seo, 'meta_title') || getField(homeData, 'Hero_Title') || `${SITE_NAME}`,
       description: getField(seo, 'meta_description') || "Expert-led tours in Northern Ethiopia.",
@@ -55,8 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
- //removed const brand = getBrand();
-const brand = await getDynamicBrand();
+  const brand = getBrand();
 
   if (!brand?.docId) {
     return <div className="p-20 text-center font-black uppercase">Configuration Error: Brand ID Missing.</div>;
@@ -65,9 +53,8 @@ const brand = await getDynamicBrand();
   try {
     // Simplified population: hero_image is a direct media field
     const [homeRes, tourRes] = await Promise.all([
-      fetch(`${STRAPI_URL}/api/homepages?filters[domain][documentId][$eq]=${brand.docId}&populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`,  { cache: 'no-store' }),
-      
-      fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][name][$eq]=${SITE_NAME}`, { cache: 'no-store' })
+      fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`, { cache: 'no-store' }),
+      fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][name][$containsi]=${SITE_NAME}`, { cache: 'no-store' })
     ]);
 
     if (!homeRes.ok) throw new Error("Failed to fetch Homepage");

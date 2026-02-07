@@ -4,7 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SelectedToursFloat from "@/components/SelectedToursFloat";
-import { getDynamicBrand, SITE_NAME, STRAPI_URL, getStrapiMedia } from "@/lib/constants";
+import { getBrand, SITE_NAME, STRAPI_URL, getStrapiMedia } from "@/lib/constants";
 
 // Force fresh data on every request for multi-tenant domain switching
 export const dynamic = "force-dynamic";
@@ -53,7 +53,7 @@ async function getBrandAssets(docId: string) {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brandConfig = await getDynamicBrand();
+  const brandConfig = getBrand();
   const brandData = await getBrandAssets(brandConfig.docId);
   
   // Navigate the Strapi v5 media object structure properly
