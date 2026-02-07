@@ -1,4 +1,5 @@
 // src/lib/constants.ts
+import { headers } from 'next/headers';
 
 /**
  * STRAPI_URL Sanitizer
@@ -12,13 +13,25 @@ export const STRAPI_URL = getStrapiURL();
 export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.dev";
 
 /**
- * SITE_NAME logic
+ * SITE_NAME logic - Now truly dynamic for Server and Client
  */
 export const SITE_NAME = (() => {
+  // 1. Client-side check
   if (typeof window !== "undefined") {
     return window.location.hostname.replace("www.", "").toLowerCase();
   }
-  return (process.env.NEXT_PUBLIC_SITE_NAME || "gheraltatours.com").toLowerCase();
+
+  // 2. Server-side check using Next.js headers
+  try {
+    const headersList = headers();
+    const host = headersList.get('host') || "";
+    // Removes www and port numbers (e.g., localhost:3000 -> localhost)
+    const domain = host.replace("www.", "").split(":")[0].toLowerCase();
+    return domain || process.env.NEXT_PUBLIC_SITE_NAME || "gheraltatours.com";
+  } catch (e) {
+    // Fallback for build-time or errors
+    return (process.env.NEXT_PUBLIC_SITE_NAME || "gheraltatours.com").toLowerCase();
+  }
 })();
 
 // Helper to determine if we are on a specific brand
@@ -71,14 +84,13 @@ export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
 
 /**
  * BRAND ATTRIBUTES 
- * Note: These docIds are fallbacks for local dev.
+ * 
  */
-export const BRANDS = {
+export const BRANDS: Record<string, any> = {
   "gheraltatours.com": {
     id: "tours",
     name: "Gheralta Tours",
-    //docId: "zvmy0su5bbhsy9li5uipyzv9", 
-    docId: null, // Initialized as null
+    docId: null, 
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -95,8 +107,7 @@ export const BRANDS = {
   "gheraltaadventures.com": {
     id: "adventures",
     name: "Gheralta Adventures",
-    //docId: "gas2cz781h3wylgc5s4sqm4w",
-    docId: null, // Initialized as null
+    docId: null,
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -113,8 +124,7 @@ export const BRANDS = {
   "abuneyemata.com": {
     id: "abuneyemata",
     name: "Abune Yemata",
-    //docId: "j39unsf7fqpb8q1o0eh7w9lp",
-    docId: null, // Initialized as null
+    docId: null,
     accent: "text-slate-900",
     bgAccent: "bg-slate-900",
     borderAccent: "border-slate-900",
@@ -149,33 +159,30 @@ export const getBrand = () => {
 };
 
 /**
- * getDynamicBrand (Async) - CRITICAL FOR DATA FETCHING
- * This gets the HOME PAGE'S documentId for the current domain
- * so existing page fetches like /api/homepages/${brand.docId} work.
+ * getDynamicBrand (Async)
+ * Fetches the DOMAIN'S documentId for the currently active SITE_NAME
  */
+
 export async function getDynamicBrand() {
   const baseBrand = getBrand();
   try {
-    // 1. Fetch the Homepage that is linked to the current domain name
-    // We filter by domain name so it works across all your brands
-    
-    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${SITE_NAME}`, {
-      next: { revalidate: 3600 }
 
+    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${SITE_NAME}`, {
+      
+      next: { revalidate: 3600 }
+    
     });
     
-const json = await res.json();
-
-    // 2. Get the documentId of the HOME PAGE record
-const domainDocId = json.data?.[0]?.documentId;
+    const json = await res.json();
+    const domainDocId = json.data?.[0]?.documentId;
 
     if (!domainDocId) {
-       console.warn(`No homepage found for domain: ${SITE_NAME}`);
+       console.warn(`No domain record found for: ${SITE_NAME}`);
     }
 
     return {
       ...baseBrand,
-      // We overwrite docId with the REAL Homepage ID from Strapi
+
       docId: domainDocId || baseBrand.docId
     };
     
@@ -199,12 +206,12 @@ export async function getDynamicContact() {
   }
 
   try {
-    const res = await fetch(`${STRAPI_URL}/api/contact-infos?populate=domain`, { 
+    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$eq]=${SITE_NAME}`, { 
       next: { revalidate: 3600 },
       headers: { 'Content-Type': 'application/json' }
     });
     const json = await res.json();
-    const myContact = json.data?.find((c: any) => c.domain?.name?.toLowerCase() === SITE_NAME.toLowerCase());
+    const myContact = json.data?.[0];
 
     if (!myContact) {
       return {
