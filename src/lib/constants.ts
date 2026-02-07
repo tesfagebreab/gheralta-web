@@ -38,7 +38,7 @@ const getHostname = () => {
 export const SITE_NAME = getHostname();
 
 /**
- * THE NORMALIZATION HELPER (Strapi v5 compatibility)
+ * THE NORMALIZATION HELPER
  */
 export const getField = (obj: any, fieldName: string) => {
   if (!obj) return null;
@@ -83,8 +83,8 @@ export const getStrapiMedia = (media: any, format: 'small' | 'medium' | 'thumbna
 export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
 
 /**
- * BRAND ATTRIBUTES (Styles & Config)
- * Note: docId here is now just a fallback. 
+ * BRAND ATTRIBUTES 
+ * Note: These docIds are fallbacks for local dev.
  */
 export const BRANDS = {
   "gheraltatours.com": {
@@ -141,27 +141,8 @@ export const BRANDS = {
 };
 
 /**
- * NEW: DYNAMIC DOMAIN FETCHING
- * Use this in your pages to get the REAL docId from Strapi
+ * getBrand (Static) - Keep for Layouts/Styles
  */
-export async function getDynamicDomain() {
-  try {
-    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${SITE_NAME}`, {
-      next: { revalidate: 3600 }
-    });
-    const json = await res.json();
-    // In Strapi v5, the ID is often in 'documentId' or 'id'
-    const domainData = json.data?.[0];
-    return {
-      docId: domainData?.documentId || domainData?.id,
-      ...domainData
-    };
-  } catch (error) {
-    console.error("Error fetching dynamic domain:", error);
-    return null;
-  }
-}
-
 export const getBrand = () => {
   const match = Object.keys(BRANDS).find(key => key === SITE_NAME);
   const brand = match ? BRANDS[match as keyof typeof BRANDS] : BRANDS["gheraltatours.com"];
@@ -178,7 +159,30 @@ export const getBrand = () => {
 };
 
 /**
- * CONTACT_INFO (Dynamic & Relation-Aware)
+ * getDynamicBrand (Async) - CRITICAL FOR DATA FETCHING
+ * This gets the real docId from Strapi so Railway never fails.
+ */
+export async function getDynamicBrand() {
+  const baseBrand = getBrand();
+  try {
+    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq] =${SITE_NAME}`, {
+      next: { revalidate: 3600 }
+    });
+    const json = await res.json();
+    const realDocId = json.data?.[0]?.documentId || json.data?.[0]?.id;
+
+    return {
+      ...baseBrand,
+      docId: realDocId || baseBrand.docId // Fallback to hardcoded if Strapi is down
+    };
+  } catch (error) {
+    console.error("Dynamic Brand Fetch Error:", error);
+    return baseBrand;
+  }
+}
+
+/**
+ * CONTACT_INFO
  */
 export async function getDynamicContact() {
   if (!STRAPI_URL || STRAPI_URL.includes('undefined')) {
@@ -195,14 +199,8 @@ export async function getDynamicContact() {
       next: { revalidate: 3600 },
       headers: { 'Content-Type': 'application/json' }
     });
-    
-    if (!res.ok) throw new Error(`Fetch failed with status: ${res.status}`);
     const json = await res.json();
-    
-    const myContact = json.data?.find((c: any) => {
-      const domainName = c.domain?.name; 
-      return domainName?.toLowerCase() === SITE_NAME.toLowerCase();
-    });
+    const myContact = json.data?.find((c: any) => c.domain?.name?.toLowerCase() === SITE_NAME.toLowerCase());
 
     if (!myContact) {
       return {

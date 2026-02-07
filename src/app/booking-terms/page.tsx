@@ -1,4 +1,4 @@
-import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
+import { STRAPI_URL, SITE_NAME, getDynamicBrand, getField, getStrapiMedia } from "@/lib/constants";
 import { Metadata } from "next";
 import Link from "next/link";
 
@@ -101,7 +101,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BookingTermsPage() {
-  const brand = getBrand();
+  const brand = await getDynamicBrand();
   const data = await getBookingTermsForDomain();
 
   if (!data) {

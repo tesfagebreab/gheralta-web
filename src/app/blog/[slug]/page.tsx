@@ -5,7 +5,7 @@ import React from 'react';
 import { notFound } from "next/navigation";
 import { 
   STRAPI_URL, 
-  getBrand, 
+  getDynamicBrand, 
   SITE_NAME, 
   getField, 
   getStrapiMedia 
@@ -95,7 +95,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const brand = getBrand();
+  const brand = await getDynamicBrand();
 
   const fetchUrl = `${STRAPI_URL}/api/posts?filters[slug][$eq]=${slug}&populate=*`;
   const res = await fetch(fetchUrl, { cache: 'no-store' });

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Metadata } from "next";
-import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
+import { STRAPI_URL, SITE_NAME, getDynamicBrand, getField, getStrapiMedia } from "@/lib/constants";
 import TrustBanner from "@/components/TrustBanner";
 
 // Force Next.js to skip the cache and re-run the logic on every visit
@@ -26,7 +26,9 @@ const parseStrapiBlocks = (content: any): string => {
 };
 
 export async function generateMetadata(): Promise <Metadata> {
-  const brand = getBrand();
+  //removed const brand = getBrand();
+  const brand = await getDynamicBrand();
+
   if (!brand?.docId) return { title: SITE_NAME };
   try {
     const res = await fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[seo]=*`, { cache: 'no-store' });
@@ -44,7 +46,8 @@ export async function generateMetadata(): Promise <Metadata> {
 }
 
 export default async function Home() {
-  const brand = getBrand();
+ //removed const brand = getBrand();
+const brand = await getDynamicBrand();
 
   if (!brand?.docId) {
     return <div className="p-20 text-center font-black uppercase">Configuration Error: Brand ID Missing.</div>;
@@ -54,7 +57,7 @@ export default async function Home() {
     // Simplified population: hero_image is a direct media field
     const [homeRes, tourRes] = await Promise.all([
       fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`, { cache: 'no-store' }),
-      fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][name][$containsi]=${SITE_NAME}`, { cache: 'no-store' })
+      fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][name][$eq]=${SITE_NAME}`, { cache: 'no-store' })
     ]);
 
     if (!homeRes.ok) throw new Error("Failed to fetch Homepage");
