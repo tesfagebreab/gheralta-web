@@ -184,7 +184,7 @@ export async function getDynamicBrand() {
     return {
       ...baseBrand,
       // We overwrite docId with the REAL Homepage ID from Strapi
-      docId: homePageDocId || baseBrand.docId 
+      docId: homePageDocId
     };
   } catch (error) {
     console.error("Dynamic Brand Fetch Error:", error);
