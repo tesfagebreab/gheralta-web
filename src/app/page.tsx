@@ -25,16 +25,26 @@ const parseStrapiBlocks = (content: any): string => {
   return "";
 };
 
-export async function generateMetadata(): Promise <Metadata> {
-  //removed const brand = getBrand();
+export async function generateMetadata(): Promise<Metadata> {
   const brand = await getDynamicBrand();
 
   if (!brand?.docId) return { title: SITE_NAME };
+
   try {
-    const res = await fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[seo]=*`, { cache: 'no-store' });
+    // CHANGE: Use filter instead of ID in the path
+    const res = await fetch(
+      `${STRAPI_URL}/api/homepages?filters[domain][documentId][$eq]=${brand.docId}&populate[seo]=*`, 
+      { cache: 'no-store' }
+    );
+    
     const json = await res.json();
-    const homeData = json.data || {};
+    
+    // homeData will be the object inside the data array
+    const homeData = json.data || {}; 
+    
+    // getField handles the array automatically
     const seo = getField(homeData, 'SEO');
+
     return {
       title: getField(seo, 'meta_title') || getField(homeData, 'Hero_Title') || `${SITE_NAME}`,
       description: getField(seo, 'meta_description') || "Expert-led tours in Northern Ethiopia.",
@@ -56,7 +66,8 @@ const brand = await getDynamicBrand();
   try {
     // Simplified population: hero_image is a direct media field
     const [homeRes, tourRes] = await Promise.all([
-      fetch(`${STRAPI_URL}/api/homepages/${brand.docId}?populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`, { cache: 'no-store' }),
+      fetch(`${STRAPI_URL}/api/homepages?filters[domain][documentId][$eq]=${brand.docId}&populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`,  { cache: 'no-store' }),
+      
       fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][name][$eq]=${SITE_NAME}`, { cache: 'no-store' })
     ]);
 
