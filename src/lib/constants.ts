@@ -12,32 +12,30 @@ export const STRAPI_URL = getStrapiURL();
 export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.dev";
 
 /**
- * SITE_NAME logic - Safely handles Server and Client
- * This allows the backend to know which domain is being requested.
+ * NEW: Dynamic Domain Detection
+ * This replaces the static SITE_NAME constant to ensure Railway 
+ * detects the domain on every request, not just at build time.
  */
-export const SITE_NAME = (() => {
-  // 1. Client-side check (Safe for Browser)
+export async function getActiveDomain() {
+  // 1. Client-side check
   if (typeof window !== "undefined") {
     return window.location.hostname.replace("www.", "").toLowerCase();
   }
 
-  // 2. Server-side check using dynamic require to prevent build-time/client crashes
+  // 2. Server-side check
   try {
-    const { headers } = require('next/headers');
-    const headersList = headers();
+    const { headers } = await import('next/headers');
+    const headersList = await headers();
+    // Railway uses x-forwarded-host for custom domains
     const host = headersList.get('x-forwarded-host') || headersList.get('host') || "";
-    
     const domain = host.replace("www.", "").split(":")[0].toLowerCase();
     
-    return domain || process.env.NEXT_PUBLIC_SITE_NAME || "gheraltatours.com";
+    // Fallback to Env or default
+    return domain || "gheraltatours.com";
   } catch (e) {
-    // Fallback for build phase or errors
-    return (process.env.NEXT_PUBLIC_SITE_NAME || "gheraltatours.com").toLowerCase();
+    return "gheraltatours.com";
   }
-})();
-
-// Helper to determine if we are on a specific brand
-export const isBrand = (domain: string) => SITE_NAME.includes(domain);
+}
 
 /**
  * THE NORMALIZATION HELPER
@@ -84,11 +82,34 @@ export const getStrapiMedia = (media: any, format: 'small' | 'medium' | 'thumbna
 
 export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
 
+export interface NavItem {
+  label: string;
+  href: string;
+}
+
+export interface BrandConfig {
+  id: string;
+  name: string;
+  docId: string | null;
+  accent: string;
+  bgAccent: string;
+  borderAccent: string;
+  buttonHover: string;
+  description: string;
+  email: string;
+  nav: NavItem[];
+  colors?: {
+    primary: string;
+    accent: string;
+    bgAccent: string;
+    hover: string;
+  };
+}
+
 /**
  * BRAND ATTRIBUTES 
- * Explicitly typed to support dynamic access
  */
-export const BRANDS: Record<string, any> = {
+export const BRANDS: Record<string, BrandConfig> = {
   "gheraltatours.com": {
     id: "tours",
     name: "Gheralta Tours",
@@ -143,11 +164,11 @@ export const BRANDS: Record<string, any> = {
 };
 
 /**
- * getBrand (Static) - Keep for Layouts/Styles
+ * getBrand (Async) - Returns layout styles based on current domain
  */
-export const getBrand = () => {
-  const match = Object.keys(BRANDS).find(key => key === SITE_NAME);
-  const brand = match ? BRANDS[match as keyof typeof BRANDS] : BRANDS["gheraltatours.com"];
+export async function getBrand(): Promise<BrandConfig> {
+  const domain = await getActiveDomain();
+  const brand = BRANDS[domain] || BRANDS["gheraltatours.com"];
   
   return {
     ...brand,
@@ -158,25 +179,23 @@ export const getBrand = () => {
       hover: brand.id === 'abuneyemata' ? "#1e293b" : "#9a3412"
     }
   };
-};
+}
 
 /**
  * getDynamicBrand (Async)
  * Fetches the documentId for the current domain record in Strapi
  */
-export async function getDynamicBrand() {
-  const baseBrand = getBrand();
+export async function getDynamicBrand(): Promise<BrandConfig> {
+  const domain = await getActiveDomain();
+  const baseBrand = await getBrand();
+
   try {
-    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${SITE_NAME}`, {
+    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${domain}`, {
       next: { revalidate: 3600 }
     });
     
     const json = await res.json();
     const domainDocId = json.data?.[0]?.documentId;
-
-    if (!domainDocId) {
-       console.warn(`[Constants] No Strapi domain record found for: ${SITE_NAME}`);
-    }
 
     return {
       ...baseBrand,
@@ -184,7 +203,6 @@ export async function getDynamicBrand() {
     };
     
   } catch (error) {
-    console.error("[Constants] Dynamic Brand Fetch Error:", error);
     return baseBrand;
   }
 }
@@ -193,17 +211,10 @@ export async function getDynamicBrand() {
  * CONTACT_INFO
  */
 export async function getDynamicContact() {
-  if (!STRAPI_URL || STRAPI_URL.includes('undefined')) {
-    return {
-      phone: "+251 928714272",
-      whatsapp: "https://wa.me/251928714272",
-      email: "info@gheraltatours.com",
-      address: "Hawzen, Tigray, Ethiopia",
-    };
-  }
+  const domain = await getActiveDomain();
 
   try {
-    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$eq]=${SITE_NAME}`, { 
+    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$eq]=${domain}`, { 
       next: { revalidate: 3600 },
       headers: { 'Content-Type': 'application/json' }
     });
@@ -214,7 +225,7 @@ export async function getDynamicContact() {
       return {
         phone: "+251 928714272",
         whatsapp: "https://wa.me/251928714272",
-        email: SITE_NAME === "abuneyemata.com" ? "hello@abuneyemata.com" : "info@gheraltatours.com",
+        email: domain === "abuneyemata.com" ? "hello@abuneyemata.com" : "info@gheraltatours.com",
         address: "Hawzen, Tigray, Ethiopia",
       };
     }
