@@ -113,7 +113,7 @@ export default function Navbar() {
 
           {/* DESKTOP MENU */}
           <div className="hidden lg:flex items-center gap-10">
-            {brand.nav.map((item) => {
+            {brand.nav.map((item: any) => {
               const isActive = pathname === item.href;
               return (
                 <Link 
@@ -179,7 +179,7 @@ export default function Navbar() {
 
         {/* Content Container - Uses 100dvh for Safari support */}
         <div className="relative h-[100dvh] flex flex-col justify-center px-8 sm:px-12 gap-5 overflow-y-auto transform-gpu">
-          {brand.nav.map((item, idx) => (
+          {brand.nav.map((item: any, idx: number) => (
             <Link 
               key={item.href}
               href={item.href}
