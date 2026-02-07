@@ -1,5 +1,4 @@
 // src/lib/constants.ts
-import { headers } from 'next/headers';
 
 /**
  * STRAPI_URL Sanitizer
@@ -13,23 +12,22 @@ export const STRAPI_URL = getStrapiURL();
 export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.dev";
 
 /**
- * SITE_NAME logic - Now truly dynamic for Server and Client
+ * SITE_NAME logic - Safely handles Server and Client
  */
 export const SITE_NAME = (() => {
-  // 1. Client-side check
+  // 1. Client-side check (Safe for Browser)
   if (typeof window !== "undefined") {
     return window.location.hostname.replace("www.", "").toLowerCase();
   }
 
-  // 2. Server-side check using Next.js headers
+  // 2. Server-side check (using a dynamic require to prevent Client-side crashes)
   try {
-    const headersList = headers();
-    const host = headersList.get('host') || "";
-    // Removes www and port numbers (e.g., localhost:3000 -> localhost)
-    const domain = host.replace("www.", "").split(":")[0].toLowerCase();
-    return domain || process.env.NEXT_PUBLIC_SITE_NAME || "gheraltatours.com";
+    const { headers } = require('next/headers');
+    const host = headers().get('host') || "";
+    return host.replace("www.", "").split(":")[0].toLowerCase() || 
+           process.env.NEXT_PUBLIC_SITE_NAME || 
+           "gheraltatours.com";
   } catch (e) {
-    // Fallback for build-time or errors
     return (process.env.NEXT_PUBLIC_SITE_NAME || "gheraltatours.com").toLowerCase();
   }
 })();
@@ -84,7 +82,6 @@ export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
 
 /**
  * BRAND ATTRIBUTES 
- * 
  */
 export const BRANDS: Record<string, any> = {
   "gheraltatours.com": {
@@ -141,7 +138,7 @@ export const BRANDS: Record<string, any> = {
 };
 
 /**
- * getBrand (Static) - Keep for Layouts/Styles
+ * getBrand (Static)
  */
 export const getBrand = () => {
   const match = Object.keys(BRANDS).find(key => key === SITE_NAME);
@@ -160,34 +157,23 @@ export const getBrand = () => {
 
 /**
  * getDynamicBrand (Async)
- * Fetches the DOMAIN'S documentId for the currently active SITE_NAME
  */
-
 export async function getDynamicBrand() {
   const baseBrand = getBrand();
   try {
-
     const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${SITE_NAME}`, {
-      
       next: { revalidate: 3600 }
-    
     });
     
     const json = await res.json();
     const domainDocId = json.data?.[0]?.documentId;
 
-    if (!domainDocId) {
-       console.warn(`No domain record found for: ${SITE_NAME}`);
-    }
-
     return {
       ...baseBrand,
-
       docId: domainDocId || baseBrand.docId
     };
     
   } catch (error) {
-    console.error("Dynamic Brand Fetch Error:", error);
     return baseBrand;
   }
 }
