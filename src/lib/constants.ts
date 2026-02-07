@@ -1,14 +1,8 @@
 // src/lib/constants.ts
 
-/**
- * STRAPI_URL Sanitizer
- */
 const getStrapiURL = () => {
   const url = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
-  if (url.includes("localhost") || url.includes("127.0.0.1") || url.startsWith("http")) {
-    return url;
-  }
-  return `https://${url}`;
+  return url.startsWith("http") ? url : `https://${url}`;
 };
 
 export const STRAPI_URL = getStrapiURL();
@@ -20,7 +14,7 @@ export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.de
 const getHostname = () => {
   const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
   
-  if (process.env.NODE_ENV === 'development' && envSite) {
+  if (process.env.NODE_ENV === 'production' && envSite) {
     return envSite.toLowerCase();
   }
 
