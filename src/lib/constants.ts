@@ -4,6 +4,12 @@
  * STRAPI_URL Sanitizer
  * Ensures the URL always has https:// even if the environment variable is missing it.
  */
+// src/lib/constants.ts
+
+/**
+ * STRAPI_URL Sanitizer
+ * Ensures the URL always has https:// even if the environment variable is missing it.
+ */
 const getStrapiURL = () => {
   const url = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
   // If it's a local address or already has a protocol, return as is
@@ -19,26 +25,36 @@ export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.de
 
 /**
  * SITE_NAME logic: Detects the domain to apply brand-specific styling.
+ * Fixed for SSR in production (Railway) using request headers.
  */
 const getHostname = () => {
   const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
-  
-  if (process.env.NODE_ENV === 'development' && envSite) {
-    return envSite.toLowerCase();
-  }
 
+  // Client-side (browser) - works as before
   if (typeof window !== "undefined") {
     const host = window.location.hostname.replace("www.", "").toLowerCase();
     if (host === "localhost" || host === "127.0.0.1") {
-       return (envSite || "gheraltatours.com").toLowerCase();
+      return (envSite || "gheraltatours.com").toLowerCase();
     }
     return host;
   }
-  
-  return (envSite || "gheraltatours.com").toLowerCase();
+
+  // Server-side (SSR) - critical fix for production
+  try {
+    const { headers } = require("next/headers");
+    const headersList = headers();
+    const host = headersList.get("x-forwarded-host") || headersList.get("host") || "";
+    const domain = host.replace("www.", "").split(":")[0].toLowerCase(); // strip port if present
+    return domain || (envSite || "gheraltatours.com").toLowerCase();
+  } catch (e) {
+    // Fallback for build time or errors
+    return (envSite || "gheraltatours.com").toLowerCase();
+  }
 };
 
 export const SITE_NAME = getHostname();
+
+// Rest of your file unchanged (getField, getStrapiMedia, BRANDS with docId fallbacks, getBrand, getDynamicContact)
 
 /**
  * THE NORMALIZATION HELPER (Strapi v5 compatibility)
