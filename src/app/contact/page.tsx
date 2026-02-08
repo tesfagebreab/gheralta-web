@@ -31,24 +31,23 @@ export async function generateMetadata(): Promise<Metadata> {
   const currentSite = await getSiteName();
 
   try {
-    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$eq]=${currentSite}&populate=*`, { 
+    // Standardizing the filter to ensure we get the SEO settings for the correct brand
+    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$eqi]=${currentSite}&populate=seo.meta_image`, { 
       cache: 'no-store'
     });
     
     if (!res.ok) return { title: `Contact | ${currentSite}` };
 
     const json = await res.json();
-    
-    // Strapi v5 Normalization: Check for attributes or direct object
     const rawData = json.data?.[0];
-    const data = rawData?.attributes || rawData || {};
     
-    const seo = getField(data, 'seo');
+    // Using getField helper for V5 resilience
+    const seo = getField(rawData, 'seo');
     const metaImg = getField(seo, 'meta_image');
 
     return {
       title: getField(seo, 'meta_title') || `Contact Us | ${currentSite}`,
-      description: getField(seo, 'meta_description') || `Get in touch with the ${currentSite} team.`,
+      description: getField(seo, 'meta_description') || `Get in touch with the ${currentSite} team for your Gheralta adventure.`,
       openGraph: {
         images: metaImg ? [getStrapiMedia(metaImg)] : [],
       }
@@ -64,22 +63,22 @@ export default async function ContactPage({
 }: { 
   searchParams: Promise<{ inquiry?: string }> 
 }) {
-  const brand = getBrand();
   const currentSite = await getSiteName();
+  const brand = getBrand(currentSite);
   
   try {
     const resolvedParams = await searchParams;
     const initialInterest = resolvedParams?.inquiry || "";
 
-    // Fetch dynamic phone, whatsapp, address, and email
-    const contact = await getDynamicContact();
+    // Fetch dynamic phone, whatsapp, address, and email using our central helper
+    const contact = await getDynamicContact(currentSite);
 
-    // Standardized input styles following the sandstone palette (#c2410c)
-    const inputStyles = "w-full p-4 rounded-xl border border-stone-200 bg-stone-50 focus:ring-2 focus:ring-[#c2410c] focus:border-transparent outline-none transition-all font-medium text-stone-900 placeholder:text-stone-400 text-base";
+    // Standardized input styles following your specific brand accents
+    const inputStyles = `w-full p-4 rounded-xl border border-stone-200 bg-stone-50 focus:ring-2 ${brand.id === 'abuneyemata' ? 'focus:ring-slate-900' : 'focus:ring-[#c2410c]'} focus:border-transparent outline-none transition-all font-medium text-stone-900 placeholder:text-stone-400 text-base`;
 
     return (
       <main className="bg-[#fafaf9] pt-24 md:pt-32 pb-16 md:pb-24 min-h-screen overflow-x-hidden font-sans">
-         <div className="max-w-7xl mx-auto px-5 md:px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+          <div className="max-w-7xl mx-auto px-5 md:px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
             
             {/* Left Column: Brand Info */}
             <div className="flex flex-col justify-center">
@@ -95,7 +94,7 @@ export default async function ContactPage({
                  {/* WhatsApp / Phone Card */}
                  <div className="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-stone-100 shadow-sm hover:shadow-md transition-shadow">
                      <h3 className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 mb-2 md:mb-3">WhatsApp / Phone</h3>
-                     <p className="text-xl md:text-2xl font-black text-stone-900 mb-2 break-all">{contact.phone || "Contact via WhatsApp"}</p>
+                     <p className="text-xl md:text-2xl font-black text-stone-900 mb-2 break-all">{contact.phone || "+251 928714272"}</p>
                      <a 
                        href={contact.whatsapp || "#"} 
                        target="_blank" 
@@ -109,7 +108,7 @@ export default async function ContactPage({
                  {/* Direct Email Card */}
                  <div className="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-stone-100 shadow-sm hover:shadow-md transition-shadow">
                      <h3 className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 mb-2 md:mb-3">Direct Email</h3>
-                     <p className="text-xl md:text-2xl font-black text-stone-900 mb-1 break-all">{contact.email}</p>
+                     <p className="text-xl md:text-2xl font-black text-stone-900 mb-1 break-all">{contact.email || brand.email}</p>
                      <p className="text-[9px] md:text-[10px] font-bold text-stone-400 uppercase tracking-widest">Official {brand.name} Inbox</p>
                  </div>
 
@@ -117,7 +116,7 @@ export default async function ContactPage({
                  <div className="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-stone-100 shadow-sm hover:shadow-md transition-shadow">
                      <h3 className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 mb-2 md:mb-3">Basecamp Location</h3>
                      <div className="text-lg md:text-xl font-black text-stone-900 leading-snug break-words">
-                       {parseStrapiBlocks(contact.address) || "Gheralta Mountains, Ethiopia"}
+                       {parseStrapiBlocks(contact.address) || "Hawzen, Tigray, Ethiopia"}
                      </div>
                      <p className="text-[9px] md:text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-2">Open Daily for Expeditions</p>
                  </div>
@@ -143,7 +142,7 @@ export default async function ContactPage({
                </p>
             </div>
 
-         </div>
+          </div>
       </main>
     );
   } catch (error) {

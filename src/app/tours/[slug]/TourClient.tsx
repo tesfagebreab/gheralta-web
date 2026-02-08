@@ -232,8 +232,7 @@ export default function TourDetail() {
   const galleryImages = gallery.map((img: any) => ({
     url: getStrapiMedia(img) || "",
     alternativeText: img.alternativeText || img.caption || tour.Title || "Gallery Image"
-// Adding (img: any) or (img: { url: string }) satisfies the compiler
-})).filter((img: any) => img.url !== "");
+  })).filter((img: any) => img.url !== "");
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -244,7 +243,7 @@ export default function TourDetail() {
         <span className="font-black italic tracking-tighter uppercase">{(brand.name || "Tour").split(' ')[0]}.</span>
       </nav>
 
-      {/* Hero Section - UPDATED WITH SAFE WRAPPING AND CENTERING */}
+      {/* Hero Section */}
       <div className="relative h-[65vh] w-full bg-slate-900 flex items-center justify-center overflow-hidden">
         {tour.Image && (
           <Image src={getStrapiMedia(tour.Image) || ""} alt={tour.Title || "Hero"} fill className="object-cover opacity-70" priority />
@@ -347,7 +346,7 @@ export default function TourDetail() {
             </div>
           </div>
 
-          {/* Visual Journey - Updated with TourGallery Component */}
+          {/* Visual Journey */}
           <h2 className="text-3xl font-black italic uppercase tracking-tight mb-8">Visual Journey</h2>
           <div className="mb-16">
             {galleryImages.length > 0 ? (
@@ -418,7 +417,7 @@ export default function TourDetail() {
               <div>
                 <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">{hasPricing ? "Starting From" : "Bespoke Adventure"}</p>
                 <p className="text-4xl font-black italic tracking-tighter text-slate-900">
-                  {hasPricing ? `$${startingPrice}` : "On Request"}
+                  {hasPricing ? `$${startingPrice}` : "Price upon request"}
                   {hasPricing && <span className="text-xs font-bold text-slate-400 uppercase ml-2 italic">/ person</span>}
                 </p>
               </div>

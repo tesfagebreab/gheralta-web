@@ -7,20 +7,22 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SelectedToursFloat from "@/components/SelectedToursFloat";
-import { getBrand, STRAPI_URL, getStrapiMedia } from "@/lib/constants";
+import { getBrand, STRAPI_URL, getStrapiMedia, getField } from "@/lib/constants";
 import { getSiteName } from '@/lib/server-utils';
 
 // Force fresh data on every request for multi-tenant domain switching
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// Viewport export: prevents "auto-zoom" on iOS and sets brand theme color
+/**
+ * Viewport export: sets brand theme color dynamically based on the sandstone palette
+ */
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#c2410c", 
+  themeColor: "#c2410c", // Burnt Clay / Sandstone primary
 };
 
 const sans = Inter({
@@ -46,9 +48,12 @@ export async function getBrandAssets() {
   const currentSite = await getSiteName();
 
   try {
-    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${currentSite}&populate=*`, {
+    // Using $eqi for case-insensitive matching in Strapi v5
+    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eqi]=${currentSite}&populate=*`, {
       next: { revalidate: 3600 }
     });
+    
+    if (!res.ok) throw new Error("Failed to fetch domain assets");
     const json = await res.json();
     
     // Strapi v5 Normalization: Return the first item
@@ -64,13 +69,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const brandConfig = getBrand(currentSite);
   const rawBrandData = await getBrandAssets();
   
-  // V5 Data Normalization & Mapping Resilience
-  const brandData = rawBrandData?.attributes || rawBrandData || {};
+  // Use getField helper for v5 resilience (handles .attributes or flat)
+  const faviconObj = getField(rawBrandData, 'favicon');
+  const logoObj = getField(rawBrandData, 'brand_logo');
   
-  // Navigate the Strapi v5 media object structure properly
-  const faviconObj = brandData.favicon?.data || brandData.favicon;
-  const logoObj = brandData.brand_logo?.data || brandData.brand_logo;
-  
+  // Fallback chain for favicon: Strapi Favicon > Strapi Logo > Static Icon
   const faviconUrl = getStrapiMedia(faviconObj || logoObj, 'thumbnail') || "/icon.png";
   
   return {
@@ -101,6 +104,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: brandConfig.name,
       locale: 'en_US',
       type: 'website',
+      images: logoObj ? [getStrapiMedia(logoObj)] : [],
     },
   };
 }
@@ -123,15 +127,13 @@ export default async function RootLayout({
       <body
         className={`${sans.variable} ${serif.variable} ${mono.variable} ${brandClassName} antialiased font-sans flex flex-col min-h-screen overflow-x-hidden`}
       >
-        {/* Navbar handles mobile menu internally */}
+        {/* Pass domain to components that need server-side brand context if needed */}
         <Navbar />
         
-        {/* main ensures content doesn't horizontal scroll on small screens */}
         <main className="flex-grow w-full max-w-full overflow-x-hidden">
           {children}
         </main>
 
-        {/* SelectedToursFloat is pinned to bottom; logic is brand-aware */}
         <SelectedToursFloat />
 
         <Footer />
