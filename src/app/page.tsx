@@ -9,7 +9,6 @@ import { STRAPI_URL, getBrand, getField, getStrapiMedia } from "@/lib/constants"
 import { getSiteName } from '@/lib/server-utils';
 import TrustBanner from "@/components/TrustBanner";
 
-
 // --- HELPERS ---
 
 const parseStrapiBlocks = (content: any): string => {
@@ -97,17 +96,6 @@ export default async function Home() {
     const hasFeatured = Array.isArray(strapiFeaturedTours) && strapiFeaturedTours.length > 0;
     const displayTours = hasFeatured ? strapiFeaturedTours : allTours;
 
-    /*if (!heroTitle) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
-           <div className="text-center p-12 bg-white rounded-3xl shadow-sm border border-slate-100">
-             <h1 className="text-xl font-black uppercase italic text-slate-400">{currentSite}</h1>
-             <p className="text-slate-400 mt-2">Content update in progress...</p>
-           </div>
-        </div>
-      );
-    }
-*/
     return (
       <main className="min-h-screen bg-slate-50 font-sans overflow-x-hidden">
         {/* HERO SECTION - Adjusted alignment to sit just below menu titles */}
@@ -115,7 +103,7 @@ export default async function Home() {
            {featuredImgUrl && (
              <Image
                src={featuredImgUrl}
-               alt={heroTitle}
+               alt={heroTitle || "Hero Image"}
                fill
                className="object-cover opacity-60 scale-105"
                priority
