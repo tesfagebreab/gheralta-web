@@ -29,7 +29,6 @@ export async function generateMetadata(): Promise <Metadata> {
   const brand = getBrand();
   const currentSite = await getSiteName();
 
- // if (!brand?.docId) return { title: SITE_NAME };
   try {
     const res = await fetch(`${STRAPI_URL}/api/homepages?filters[domain][name][$eq]=${currentSite}&populate=*`, { cache: 'no-store' });
     if (!res.ok) {
@@ -38,7 +37,10 @@ export async function generateMetadata(): Promise <Metadata> {
     }
   
     const json = await res.json();
-    const homeData = json.data?.[0]?.attributes || {};
+    // Strapi v5 Compatibility: check attributes, fallback to direct object
+    const rawData = json.data?.[0];
+    const homeData = rawData?.attributes || rawData || {};
+    
     const seo = getField(homeData, 'SEO');
     return {
       title: getField(seo, 'meta_title') || getField(homeData, 'Hero_Title') || `${currentSite}`,
@@ -54,12 +56,7 @@ export default async function Home() {
   const brand = getBrand();
   const currentSite = await getSiteName();
 
-  //if(!brand?.docId) {
-  //  return <div className="p-20 text-center font-black uppercase">Configuration Error: Brand ID Missing.</div>;
- // }
-
   try {
-    // Simplified population: hero_image is a direct media field
     const [homeRes, tourRes] = await Promise.all([
       fetch(`${STRAPI_URL}/api/homepages?filters[domain][name][$eq]=${currentSite}&populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`, { cache: 'no-store' }),
       fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][name][$eq]=${currentSite}`, { cache: 'no-store' })
@@ -68,7 +65,9 @@ export default async function Home() {
     let homeData = {};
     if (homeRes.ok) {
       const homeJson = await homeRes.json();
-      homeData = homeJson.data?.[0]?.attributes || {};
+      // Strapi v5 Compatibility: check attributes, fallback to direct object
+      const rawHome = homeJson.data?.[0];
+      homeData = rawHome?.attributes || rawHome || {};
     } else {
       console.warn("Homepage fetch failed:", homeRes.status);
     }
@@ -83,13 +82,9 @@ export default async function Home() {
     const partnerLogos = getField(homeData, "Partner_Logos");
     const founderMsg = getField(homeData, "Founder_Philosophy");
     
-    // Applying the specific image logic from About Us
     const featuredImgUrl = getStrapiMedia(heroImageRaw, 'large');
-    
-    // Extract TrustBanner Data (Single Object Logic)
     const trustBannerData = getField(homeData, "TrustBanner") || (homeData as any).TrustBanner;
 
-    // Extract Tours & Types
     const interestTypes = getField(homeData, "featured_types") || [];
     const strapiFeaturedTours = getField(homeData, "featured_tours");
 
@@ -98,7 +93,7 @@ export default async function Home() {
 
     return (
       <main className="min-h-screen bg-slate-50 font-sans overflow-x-hidden">
-        {/* HERO SECTION - Adjusted alignment to sit just below menu titles */}
+        {/* HERO SECTION */}
         <section className="relative w-full h-[75vh] flex items-start justify-center pt-16 md:pt-20 overflow-hidden bg-slate-900">
            {featuredImgUrl && (
              <Image
@@ -132,9 +127,11 @@ export default async function Home() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {interestTypes.map((type: any) => {
-                  const typeImg = getField(type, 'Featured_Image');
+                  // V5: types might be flattened or nested
+                  const typeData = type.attributes || type;
+                  const typeImg = getField(typeData, 'Featured_Image');
                   const resolvedImg = getStrapiMedia(typeImg, 'medium');
-                  const slug = getField(type, 'Slug');
+                  const slug = getField(typeData, 'Slug');
                   
                   return (
                     <Link
@@ -145,7 +142,7 @@ export default async function Home() {
                         {resolvedImg && (
                           <Image
                              src={resolvedImg}
-                             alt={getField(type, 'Title') || "Category"}
+                             alt={getField(typeData, 'Title') || "Category"}
                              fill
                              className="object-cover opacity-60 group-hover:scale-105 transition-all duration-700"
                              unoptimized
@@ -153,7 +150,7 @@ export default async function Home() {
                         )}
                         <div className="absolute inset-0 flex items-end p-8">
                            <h4 className="text-white font-black uppercase tracking-tighter text-3xl italic leading-tight break-words">
-                             {getField(type, 'Title')}
+                             {getField(typeData, 'Title')}
                            </h4>
                         </div>
                     </Link>
@@ -176,22 +173,23 @@ export default async function Home() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                {displayTours.map((tour: any) => {
-                 const title = getField(tour, 'Title');
-                 const slug = getField(tour, 'Slug');
-                 const description = getField(tour, 'description');
+                 const tourData = tour.attributes || tour;
+                 const title = getField(tourData, 'Title');
+                 const slug = getField(tourData, 'Slug');
+                 const description = getField(tourData, 'description');
                  
-                 const mainImage = getField(tour, 'image');
-                 const gallery = getField(tour, 'gallery');
+                 const mainImage = getField(tourData, 'image');
+                 const gallery = getField(tourData, 'gallery');
                  const displayImage = mainImage?.url ? mainImage : (Array.isArray(gallery) ? gallery[0] : null);
                  const resolvedTourImg = getStrapiMedia(displayImage, 'medium');
                  
-                 const tiers = getField(tour, 'pricing_tiers');
+                 const tiers = getField(tourData, 'pricing_tiers');
                  const priceArray = [
                    getField(tiers, 'tier_1'),
                    getField(tiers, 'tier_2_3'),
                    getField(tiers, 'tier_4_10'),
                    getField(tiers, 'tier_11_plus'),
-                   getField(tour, 'Price_Starting_At')
+                   getField(tourData, 'Price_Starting_At')
                  ].filter(p => typeof p === 'number' && p > 0);
                  
                  const startingPrice = priceArray.length > 0 ? Math.min(...priceArray) : null;
