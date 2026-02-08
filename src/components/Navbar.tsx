@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from "next/image"; 
 import { usePathname } from 'next/navigation';
-import { STRAPI_URL, getBrand, getStrapiMedia } from '@/lib/constants';
+import { STRAPI_URL, getBrand, getStrapiMedia, getDynamicContact, getField } from '@/lib/constants';
 import { useState, useEffect } from 'react';
 
 export default function Navbar() {
@@ -20,35 +20,26 @@ export default function Navbar() {
     
     async function fetchData() {
       try {
-        const contactRes = await fetch(`${STRAPI_URL}/api/contact-infos?populate=domain`);
-        if (contactRes.ok) {
-          const contactJson = await contactRes.json();
-          const myContact = contactJson.data?.find((c: any) => {
-            // Strapi v5 Normalization: Check c.domain directly or c.attributes.domain
-            const domainData = c.domain || c.attributes?.domain;
-            const domainString = typeof domainData === 'object' ? (domainData?.domain || domainData?.name) : domainData;
-            return domainString?.toLowerCase().includes(window.location.hostname.replace('www.', '').toLowerCase());
-          });
-          
-          // Strapi v5 Normalization: Check Phone directly or under attributes
-          const phone = myContact?.Phone || myContact?.attributes?.Phone;
-          if (phone) {
-            const cleanPhone = phone.replace(/\D/g, '');
-            setWhatsappLink(`https://wa.me/${cleanPhone}`);
-          }
+        // 1. Fetch Dynamic Contact Info using our fixed helper
+        const contactData = await getDynamicContact();
+        if (contactData && contactData.whatsapp) {
+          setWhatsappLink(contactData.whatsapp);
         }
 
-        const res = await fetch(`${STRAPI_URL}/api/domains?populate=*`, { cache: 'no-store' });
+        // 2. Fetch Domain Specific Assets (Logo)
+        const currentHost = window.location.hostname.replace('www.', '').toLowerCase();
+        const res = await fetch(`${STRAPI_URL}/api/domains?populate=*`, { 
+          next: { revalidate: 3600 } 
+        });
+
         if (res.ok) {
           const json = await res.json();
           const myDomainData = json.data.find((d: any) => {
-            // Strapi v5 Normalization: check direct keys first, then attributes
-            const dName = d.domain || d.name || d.attributes?.domain || d.attributes?.name;
-            return dName?.toLowerCase() === window.location.hostname.replace('www.', '').toLowerCase();
+            const dName = getField(d, 'name') || d.name || d.attributes?.name;
+            return dName?.toLowerCase() === currentHost;
           });
 
-          // Strapi v5 Normalization: check brand_logo directly or under attributes
-          const rawLogo = myDomainData?.brand_logo || myDomainData?.attributes?.brand_logo;
+          const rawLogo = getField(myDomainData, 'brand_logo');
           if (rawLogo) setLogoUrl(getStrapiMedia(rawLogo, 'small'));
         }
       } catch (error) {
@@ -63,7 +54,7 @@ export default function Navbar() {
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none'; // Prevent scroll bounce on iOS
+      document.body.style.touchAction = 'none'; 
     } else {
       document.body.style.overflow = 'unset';
       document.body.style.touchAction = 'auto';

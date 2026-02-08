@@ -1,3 +1,6 @@
+// src/app/layout.tsx
+// RAILPACK CACHE BUST - 2026-02-08 FINAL - STRAPI V5 COMPATIBLE
+
 import type { Metadata, Viewport } from "next";
 import { Inter, DM_Serif_Display, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
@@ -11,14 +14,13 @@ import { getSiteName } from '@/lib/server-utils';
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// Viewport export: maximum-scale=1 and user-scalable=no prevents 
-// "auto-zoom" on input fields in iOS, which can break layout.
+// Viewport export: prevents "auto-zoom" on iOS and sets brand theme color
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#c2410c", // Brand burnt clay color for mobile browser bars
+  themeColor: "#c2410c", 
 };
 
 const sans = Inter({
@@ -49,7 +51,7 @@ export async function getBrandAssets() {
     });
     const json = await res.json();
     
-    // Strapi v5 Normalization: Return the first item, we handle the flattening in the consumer
+    // Strapi v5 Normalization: Return the first item
     return json.data?.[0] || null;
   } catch (error) {
     console.error("Layout: Failed to fetch brand assets", error);
@@ -58,16 +60,14 @@ export async function getBrandAssets() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brandConfig = getBrand();
-  const rawBrandData = await getBrandAssets();
   const currentSite = await getSiteName();
+  const brandConfig = getBrand(currentSite);
+  const rawBrandData = await getBrandAssets();
   
   // V5 Data Normalization & Mapping Resilience
-  // Fallback pattern: check for .attributes (v4/v5 compatibility) or direct object (v5 flattened)
   const brandData = rawBrandData?.attributes || rawBrandData || {};
   
   // Navigate the Strapi v5 media object structure properly
-  // Media in v5 can be nested under .data or exist directly on the field
   const faviconObj = brandData.favicon?.data || brandData.favicon;
   const logoObj = brandData.brand_logo?.data || brandData.brand_logo;
   
@@ -80,7 +80,6 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: brandConfig.description || `Expert-led tours and adventures in the Gheralta Mountains, Tigray.`,
     metadataBase: new URL(`https://${currentSite}`),
-    // Mobile optimization
     icons: {
       icon: [
         { url: faviconUrl, type: 'image/png' },
@@ -111,10 +110,18 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Identify the domain and brand configuration
+  const currentSite = await getSiteName();
+  const brandConfig = getBrand(currentSite);
+  
+  // Create the CSS class selector (e.g., brand-tours, brand-abuneyemata) 
+  // to toggle variables in globals.css
+  const brandClassName = `brand-${brandConfig.id}`;
+
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        className={`${sans.variable} ${serif.variable} ${mono.variable} antialiased font-sans bg-[#fafaf9] text-stone-900 flex flex-col min-h-screen overflow-x-hidden`}
+        className={`${sans.variable} ${serif.variable} ${mono.variable} ${brandClassName} antialiased font-sans flex flex-col min-h-screen overflow-x-hidden`}
       >
         {/* Navbar handles mobile menu internally */}
         <Navbar />

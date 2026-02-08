@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const currentSite = await getSiteName();
 
   try {
-    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$containsi]=${currentSite}&populate=*`, { 
+    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$eq]=${currentSite}&populate=*`, { 
       cache: 'no-store'
     });
     

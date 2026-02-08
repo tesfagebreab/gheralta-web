@@ -129,7 +129,6 @@ export const getBrand = (domain?: string) => {
     ? window.location.hostname.replace("www.", "").toLowerCase() 
     : "gheraltatours.com");
 
-  // Case-insensitive match for the domain key
   const match = Object.keys(BRANDS).find(key => key.toLowerCase() === activeDomain.toLowerCase());
   const brand = match ? BRANDS[match as keyof typeof BRANDS] : BRANDS["gheraltatours.com"];
   
@@ -145,40 +144,32 @@ export const getBrand = (domain?: string) => {
 };
 
 /**
- * CONTACT_INFO (V5 Data Normalization & Mapping Resilience)
+ * CONTACT_INFO (Dynamic & Relation-Aware)
  */
 export async function getDynamicContact(domain?: string) {
   const activeDomain = domain || (typeof window !== "undefined" 
     ? window.location.hostname.replace("www.", "").toLowerCase() 
     : "gheraltatours.com");
 
-  if (!STRAPI_URL || STRAPI_URL.includes('undefined')) {
-    return {
-      phone: "+251 928714272",
-      whatsapp: "https://wa.me/251928714272",
-      email: "info@gheraltatours.com",
-      address: "Hawzen, Tigray, Ethiopia",
-    };
-  }
-
   try {
-    // We populate domain to filter correctly in the logic below
     const res = await fetch(`${STRAPI_URL}/api/contact-infos?populate=domain`, { 
       next: { revalidate: 3600 },
       headers: { 'Content-Type': 'application/json' }
     });
     
-    if (!res.ok) throw new Error(`Fetch failed with status: ${res.status}`);
+    if (!res.ok) throw new Error("Fetch failed");
     const json = await res.json();
     
-    // Find contact where normalized domain name matches activeDomain
-    const myContactData = json.data?.find((c: any) => {
-      const d = getField(c, 'domain');
-      const dName = getField(d, 'name');
+    // MATCHING LOGIC: Target c.domain.name based on Strapi V5 response
+    const myContact = json.data?.find((c: any) => {
+      // Use getField to handle potential V5 nesting variations
+      const domainData = getField(c, 'domain');
+      const dName = getField(domainData, 'name') || c.domain?.name;
       return dName?.toLowerCase() === activeDomain.toLowerCase();
     });
 
-    if (!myContactData) {
+    if (!myContact) {
+      console.warn(`No match for ${activeDomain}. Check if domain name matches exactly in Strapi.`);
       return {
         phone: "+251 928714272",
         whatsapp: "https://wa.me/251928714272",
@@ -187,20 +178,15 @@ export async function getDynamicContact(domain?: string) {
       };
     }
 
-    // Use getField to handle V5 PascalCase/camelCase resilience for all contact fields
-    const phone = getField(myContactData, "Phone") || getField(myContactData, "phone");
-    const email = getField(myContactData, "Email") || getField(myContactData, "email");
-    const address = getField(myContactData, "Office_Address") || getField(myContactData, "office_address");
-    const maps = getField(myContactData, "Maps_Link") || getField(myContactData, "maps_link");
-
     return {
-      phone: phone || "+251 928714272",
-      whatsapp: `https://wa.me/${(phone || "251928714272").replace(/\D/g, '')}`,
-      email: email || (activeDomain === "abuneyemata.com" ? "hello@abuneyemata.com" : "info@gheraltatours.com"),
-      address: address || "Hawzen, Tigray, Ethiopia",
-      maps: maps || "#"
+      phone: myContact.Phone || myContact.phone,
+      whatsapp: `https://wa.me/${(myContact.Phone || myContact.phone || "251928714272").replace(/\D/g, '')}`,
+      email: myContact.Email || myContact.email,
+      address: myContact.Office_Address || myContact.office_address,
+      maps: myContact.Maps_Link || myContact.maps_link
     };
   } catch (error) {
+    console.error("Critical Contact Fetch Error:", error);
     return {
       phone: "+251 928714272",
       whatsapp: "https://wa.me/251928714272",
