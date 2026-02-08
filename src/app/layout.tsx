@@ -41,14 +41,15 @@ const mono = JetBrains_Mono({
  * Helper to fetch brand-specific assets (Logo, Favicon) from Strapi v5
  */
 export async function getBrandAssets() {
-
-  const currentSite = await getSiteName(); // safe in server component
+  const currentSite = await getSiteName();
 
   try {
     const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${currentSite}&populate=*`, {
       next: { revalidate: 3600 }
     });
     const json = await res.json();
+    
+    // Strapi v5 Normalization: Return the first item, we handle the flattening in the consumer
     return json.data?.[0] || null;
   } catch (error) {
     console.error("Layout: Failed to fetch brand assets", error);
@@ -58,12 +59,17 @@ export async function getBrandAssets() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const brandConfig = getBrand();
-  const brandData = await getBrandAssets();
+  const rawBrandData = await getBrandAssets();
   const currentSite = await getSiteName();
   
+  // V5 Data Normalization & Mapping Resilience
+  // Fallback pattern: check for .attributes (v4/v5 compatibility) or direct object (v5 flattened)
+  const brandData = rawBrandData?.attributes || rawBrandData || {};
+  
   // Navigate the Strapi v5 media object structure properly
-  const faviconObj = brandData?.attributes?.favicon?.data || brandData?.favicon?.data;
-  const logoObj = brandData?.attributes?.brand_logo?.data || brandData?.brand_logo?.data;
+  // Media in v5 can be nested under .data or exist directly on the field
+  const faviconObj = brandData.favicon?.data || brandData.favicon;
+  const logoObj = brandData.brand_logo?.data || brandData.brand_logo;
   
   const faviconUrl = getStrapiMedia(faviconObj || logoObj, 'thumbnail') || "/icon.png";
   
@@ -74,7 +80,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: brandConfig.description || `Expert-led tours and adventures in the Gheralta Mountains, Tigray.`,
     metadataBase: new URL(`https://${currentSite}`),
-    // Mobile optimization: Explicitly defining sizes for different icon types
+    // Mobile optimization
     icons: {
       icon: [
         { url: faviconUrl, type: 'image/png' },
@@ -82,10 +88,9 @@ export async function generateMetadata(): Promise<Metadata> {
       ],
       shortcut: faviconUrl,
       apple: [
-        { url: faviconUrl, sizes: '180x180', type: 'image/png' }, // Standard size for iOS home screen
+        { url: faviconUrl, sizes: '180x180', type: 'image/png' },
       ],
     },
-    // Ensure the browser handles the app-like experience on mobile
     appleWebApp: {
       capable: true,
       statusBarStyle: "default",
