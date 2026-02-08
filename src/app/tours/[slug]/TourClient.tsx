@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link"; 
 import { notFound, useParams, useRouter } from "next/navigation";
-import { STRAPI_URL, getBrand, getStrapiMedia } from "@/lib/constants";
+import { getBrand } from "@/lib/constants";
+import { fetchAPI, getStrapiMedia } from "@/lib/strapi";
 import { addToCart, getCart } from "@/lib/cart";
 import { Clock, Mountain, Map, MapPin, CheckCircle, Briefcase, Calendar } from "lucide-react";
 import React from 'react';
@@ -22,11 +23,9 @@ const renderStrapiBlocks = (content: any) => {
   if (!Array.isArray(blocks)) return null;
 
   return blocks.map((block: any, index: number) => {
-    // Determine horizontal alignment
     const alignmentClass = block.textAlign === 'center' ? 'text-center' : 
                            block.textAlign === 'right' ? 'text-right' : 'text-left';
 
-    // Helper to render leaf nodes (text pieces and nested links)
     const renderLeaf = (child: any, i: number): React.ReactNode => {
       let classes = "";
       if (child.bold) classes += " font-black";
@@ -35,7 +34,6 @@ const renderStrapiBlocks = (content: any) => {
       if (child.strikethrough) classes += " line-through";
       if (child.code) classes += " font-mono bg-slate-100 px-1 rounded";
 
-      // Handle Hyperlinks nested in blocks
       if (child.type === 'link') {
         return (
           <a 
@@ -57,7 +55,6 @@ const renderStrapiBlocks = (content: any) => {
       );
     };
 
-    // Handle different block types
     switch (block.type) {
       case 'paragraph':
         return (
@@ -130,10 +127,23 @@ export default function TourDetail() {
     async function fetchTour() {
       if (!slug) return;
       try {
-        const query = `${STRAPI_URL}/api/tours?filters[slug][$eq]=${slug}&populate[DailyPlan][populate]=*&populate[pricing_tiers][populate]=*&populate[Gallery]=*&populate[destinations][populate]=*&populate[types][populate]=*&populate[tags][populate]=*`;
-        const response = await fetch(query, { cache: "no-store" });
-        const json = await response.json();
-        const rawEntry = json.data?.[0];
+        // Optimized Strapi v5 query using our utility
+        const response = await fetchAPI('/tours', {
+          filters: {
+            slug: { $eqi: slug } // Case-insensitive for production stability
+          },
+          populate: {
+            DailyPlan: { populate: '*' },
+            pricing_tiers: { populate: '*' },
+            Gallery: { populate: '*' },
+            destinations: { populate: '*' },
+            types: { populate: '*' },
+            tags: { populate: '*' },
+            SEO: { populate: '*' }
+          }
+        }, { cache: "no-store" });
+
+        const rawEntry = response?.data?.[0];
 
         if (!rawEntry) {
           setLoading(false);
@@ -228,9 +238,8 @@ export default function TourDetail() {
   const itinerary = Array.isArray(tour.DailyPlan) ? tour.DailyPlan : [];
   const gallery = Array.isArray(tour.Gallery) ? tour.Gallery : [];
   
-  // Prepare gallery images for the optimized component
   const galleryImages = gallery.map((img: any) => ({
-    url: getStrapiMedia(img) || "",
+    url: getStrapiMedia(img.url || img) || "",
     alternativeText: img.alternativeText || img.caption || tour.Title || "Gallery Image"
   })).filter((img: any) => img.url !== "");
 
@@ -246,7 +255,7 @@ export default function TourDetail() {
       {/* Hero Section */}
       <div className="relative h-[65vh] w-full bg-slate-900 flex items-center justify-center overflow-hidden">
         {tour.Image && (
-          <Image src={getStrapiMedia(tour.Image) || ""} alt={tour.Title || "Hero"} fill className="object-cover opacity-70" priority />
+          <Image src={getStrapiMedia(tour.Image.url || tour.Image) || ""} alt={tour.Title || "Hero"} fill className="object-cover opacity-70" priority />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
         
@@ -346,7 +355,6 @@ export default function TourDetail() {
             </div>
           </div>
 
-          {/* Visual Journey */}
           <h2 className="text-3xl font-black italic uppercase tracking-tight mb-8">Visual Journey</h2>
           <div className="mb-16">
             {galleryImages.length > 0 ? (
