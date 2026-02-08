@@ -3,7 +3,6 @@ import TourDetail from "./TourClient";
 import { STRAPI_URL, getStrapiMedia } from "@/lib/constants";
 import { getSiteName } from '@/lib/server-utils';
 
-
 type Props = {
   params: Promise<{ slug: string }>;
 };

@@ -1,38 +1,38 @@
 // src/lib/server-utils.ts
-// This file is server-only - do NOT import in client components
+// Optimized for static generation fallback
 
 import { cookies, headers } from 'next/headers';
 
 export async function getSiteName(): Promise<string> {
-  const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME || "gheraltatours.com";
+  // 1. FASTEST: Environment Variable (Static optimization friendly)
+  // If this is set during build/deployment, Next.js can pre-render pages.
+  const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
+  if (envSite) return envSite.toLowerCase();
 
   try {
-    // 1. Try to read the Middleware Cookie (Async in Next.js 15+)
+    // 2. MIDDLEWARE COOKIE: 
+    // This is fast but makes the page dynamic.
     const cookieStore = await cookies();
     const siteDomain = cookieStore.get('site_domain')?.value;
     
     if (siteDomain) {
-      // console.log(`[SSR SITE_NAME] Using cookie domain: ${siteDomain}`);
       return siteDomain.toLowerCase();
     }
 
-    // 2. Fallback: Direct Header Inspection (Robust backup for Railway/SSR)
+    // 3. HEADER INSPECTION: 
+    // Last resort for identifying the brand in a multi-tenant setup.
     const headerStore = await headers();
     const host = headerStore.get('host');
     if (host) {
       const cleanHost = host.replace('www.', '').split(':')[0].toLowerCase();
-      // console.log(`[SSR SITE_NAME] Using header host: ${cleanHost}`);
-      // Filter out localhost/IPs to ensure we return a valid brand or default
       if (!cleanHost.includes('localhost') && !cleanHost.includes('127.0.0.1')) {
         return cleanHost;
       }
     }
-
   } catch (e: any) {
-    console.error("[SSR SITE_NAME] Detection failed:", e.message);
+    // Silent catch to prevent build-time crashes
   }
 
-  // 3. Final Fallback
-  // console.warn("[SSR SITE_NAME] Fallback triggered — using env default");
-  return envSite.toLowerCase();
+  // 4. FINAL FALLBACK: Default brand
+  return "gheraltatours.com";
 }

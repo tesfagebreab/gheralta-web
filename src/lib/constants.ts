@@ -1,5 +1,5 @@
 // src/lib/constants.ts
-// RAILPACK CACHE BUST - 2026-02-08 FINAL
+// RAILPACK CACHE BUST - 2026-02-08 FINAL - BRAND PROPAGATION UPDATE
 
 /**
  * STRAPI_URL Sanitizer
@@ -69,15 +69,16 @@ export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
 
 /**
  * BRAND ATTRIBUTES
+ * Uses semantic classes defined in globals.css for propagation
  */
 export const BRANDS = {
   "gheraltatours.com": {
     id: "tours",
     name: "Gheralta Tours",
-    accent: "text-[#c2410c]",
-    bgAccent: "bg-[#c2410c]",
-    borderAccent: "border-[#c2410c]",
-    buttonHover: "hover:bg-[#9a3412]",
+    accent: "text-brand-accent",
+    bgAccent: "bg-brand-accent",
+    borderAccent: "border-brand-accent",
+    buttonHover: "hover:bg-brand-hover",
     description: "Expert-led cultural and historical journeys.",
     email: "info@gheraltatours.com",
     nav: [
@@ -90,10 +91,10 @@ export const BRANDS = {
   "gheraltaadventures.com": {
     id: "adventures",
     name: "Gheralta Adventures",
-    accent: "text-[#c2410c]",
-    bgAccent: "bg-[#c2410c]",
-    borderAccent: "border-[#c2410c]",
-    buttonHover: "hover:bg-[#9a3412]",
+    accent: "text-brand-accent",
+    bgAccent: "bg-brand-accent",
+    borderAccent: "border-brand-accent",
+    buttonHover: "hover:bg-brand-hover",
     description: "High-octane rock climbing and trekking.",
     email: "bookings@gheraltaadventures.com",
     nav: [
@@ -106,10 +107,10 @@ export const BRANDS = {
   "abuneyemata.com": {
     id: "abuneyemata",
     name: "Abune Yemata",
-    accent: "text-slate-900",
-    bgAccent: "bg-slate-900",
-    borderAccent: "border-slate-900",
-    buttonHover: "hover:bg-slate-800",
+    accent: "text-brand-accent",
+    bgAccent: "bg-brand-accent",
+    borderAccent: "border-brand-accent",
+    buttonHover: "hover:bg-brand-hover",
     description: "Pilgrimages and spiritual journeys.",
     email: "hello@abuneyemata.com",
     nav: [
@@ -128,27 +129,24 @@ export const getBrand = (domain?: string) => {
   let activeDomain = "gheraltatours.com";
 
   if (domain) {
-    // 1. Explicit domain passed from Server Component
     activeDomain = domain;
   } else if (typeof window !== "undefined") {
-    // 2. Client-side detection
     activeDomain = window.location.hostname;
   }
 
-  // Clean the domain (remove www. and port numbers)
   activeDomain = activeDomain.replace("www.", "").split(":")[0].toLowerCase();
 
-  // Find a match based on partial string (handles railway app urls temporarily if needed)
   const match = Object.keys(BRANDS).find(key => activeDomain.includes(key)) || "gheraltatours.com";
   const brand = BRANDS[match as keyof typeof BRANDS];
   
   return {
     ...brand,
     colors: {
-      primary: brand.id === 'abuneyemata' ? "#0f172a" : "#c2410c",
+      // Primary used for non-tailwind scripts (like Google Maps markers)
+      primary: brand.id === 'abuneyemata' ? "#991b1b" : (brand.id === 'adventures' ? "#15803d" : "#c2410c"),
       accent: brand.accent,
       bgAccent: brand.bgAccent,
-      hover: brand.id === 'abuneyemata' ? "#1e293b" : "#9a3412"
+      hover: brand.id === 'abuneyemata' ? "#7f1d1d" : (brand.id === 'adventures' ? "#166534" : "#9a3412")
     }
   };
 };
@@ -158,7 +156,7 @@ export const getBrand = (domain?: string) => {
  */
 export async function getDynamicContact(domain?: string) {
   const brandData = getBrand(domain);
-  const activeDomain = brandData.email.split('@')[1]; // Derived from brand data fallback
+  const activeDomain = brandData.email.split('@')[1];
 
   try {
     const res = await fetch(`${STRAPI_URL}/api/contact-infos?populate=domain`, { 
