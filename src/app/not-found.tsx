@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { getBrand, SITE_NAME } from "@/lib/constants";
+import { getBrand } from "@/lib/constants";
 
 export default function NotFound() {
   const brand = getBrand();
@@ -17,7 +17,7 @@ export default function NotFound() {
           Expedition <span className={brand.accent}>Off-Track</span>
         </h2>
         <p className="text-slate-500 text-sm md:text-base max-w-xs md:max-w-md mx-auto font-medium leading-relaxed">
-          It looks like the path you're looking for doesn't exist on <strong>{SITE_NAME}</strong>. 
+          It looks like the path you're looking for doesn't exist on <strong>{window.location.hostname.replace('www.', '')}</strong>. 
           Let's get you back to the base camp.
         </p>
       </div>

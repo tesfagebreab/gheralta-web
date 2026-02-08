@@ -6,10 +6,11 @@ import { notFound } from "next/navigation";
 import { 
   STRAPI_URL, 
   getBrand, 
-  SITE_NAME, 
   getField, 
   getStrapiMedia 
 } from "@/lib/constants";
+
+import { getSiteName } from '@/lib/server-utils';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -79,23 +80,26 @@ const RenderBlocks = ({ content, accentColor }: { content: any[], accentColor: s
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const currentSite = getSiteName(); // safe in server component
+
   try {
     const res = await fetch(`${STRAPI_URL}/api/posts?filters[slug][$eq]=${slug}&populate=*`);
     const json = await res.json();
     const post = json.data?.[0];
     const title = post?.title || post?.attributes?.title || slug;
     return { 
-      title: `${title} | Journal | ${SITE_NAME}`,
+      title: `${title} | Journal | ${currentSite}`,
       description: post?.excerpt || post?.attributes?.excerpt
     };
   } catch {
-    return { title: `Journal | ${SITE_NAME}` };
+    return { title: `Journal | ${currentSite}` };
   }
 }
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
   const brand = getBrand();
+  const currentSite = getSiteName(); // safe in server component
 
   const fetchUrl = `${STRAPI_URL}/api/posts?filters[slug][$eq]=${slug}&populate=*`;
   const res = await fetch(fetchUrl, { cache: 'no-store' });

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from "next/image"; 
 import { usePathname } from 'next/navigation';
-import { STRAPI_URL, SITE_NAME, getBrand, getStrapiMedia } from '@/lib/constants';
+import { STRAPI_URL, getBrand, getStrapiMedia } from '@/lib/constants';
 import { useState, useEffect } from 'react';
 
 export default function Navbar() {
@@ -26,7 +26,7 @@ export default function Navbar() {
           const myContact = contactJson.data?.find((c: any) => {
             const domainObj = c.domain;
             const domainString = typeof domainObj === 'object' ? domainObj?.domain : domainObj;
-            return domainString?.toLowerCase().includes(SITE_NAME.toLowerCase());
+            return domainString?.toLowerCase().includes(window.location.hostname.replace('www.', '').toLowerCase());
           });
           
           if (myContact?.Phone) {
@@ -40,7 +40,7 @@ export default function Navbar() {
           const json = await res.json();
           const myDomainData = json.data.find((d: any) => {
             const dName = d.domain || d.name || d.attributes?.domain;
-            return dName?.toLowerCase() === SITE_NAME.toLowerCase();
+            return dName?.toLowerCase() === window.location.hostname.replace('www.', '').toLowerCase();
           });
           const rawLogo = myDomainData?.brand_logo || myDomainData?.attributes?.brand_logo;
           if (rawLogo) setLogoUrl(getStrapiMedia(rawLogo, 'small'));

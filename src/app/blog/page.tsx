@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { STRAPI_URL, getBrand, SITE_NAME, getField, getStrapiMedia } from "@/lib/constants";
+import { STRAPI_URL, getBrand, getField, getStrapiMedia } from "@/lib/constants";
+import { getSiteName } from '@/lib/server-utils';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -16,6 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function BlogPage() {
   const brand = getBrand();
+  const currentSite = getSiteName ();
 
   try {
     const res = await fetch(
@@ -33,7 +35,7 @@ export default async function BlogPage() {
 
       return domainList.some((d: any) => {
         const dVal = d.domain || d.attributes?.domain || d.name || d.attributes?.name;
-        return dVal?.toLowerCase().trim() === SITE_NAME.toLowerCase().trim();
+        return dVal?.toLowerCase().trim() === currentSite.toLowerCase().trim();
       });
     });
 
@@ -143,7 +145,7 @@ export default async function BlogPage() {
           ) : (
             <div className="py-20 md:py-32 text-center border-2 border-dashed border-stone-200 rounded-[2rem] md:rounded-[4rem] bg-stone-50/50">
                <p className="text-stone-400 font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-[10px] md:text-[11px] px-6">
-                 No dispatches available for {SITE_NAME} yet.
+                 No dispatches available for {currentSite} yet.
                </p>
             </div>
           )}

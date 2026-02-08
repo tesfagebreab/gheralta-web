@@ -5,7 +5,8 @@ export const revalidate = 0;
 import Image from "next/image";
 import Link from "next/link";
 import { Metadata } from "next";
-import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
+import { STRAPI_URL, getBrand, getField, getStrapiMedia } from "@/lib/constants";
+import { getSiteName } from '@/lib/server-utils';
 import TrustBanner from "@/components/TrustBanner";
 
 
@@ -27,29 +28,32 @@ const parseStrapiBlocks = (content: any): string => {
 
 export async function generateMetadata(): Promise <Metadata> {
   const brand = getBrand();
+  const currentSite = getSiteName();
+
  // if (!brand?.docId) return { title: SITE_NAME };
   try {
-    const res = await fetch(`${STRAPI_URL}/api/homepages?filters[domain][name][$eq]=${SITE_NAME}&populate=*`, { cache: 'no-store' });
+    const res = await fetch(`${STRAPI_URL}/api/homepages?filters[domain][name][$eq]=${currentSite}&populate=*`, { cache: 'no-store' });
     if (!res.ok) {
       console.warn("Metadata homepage fetch failed:", res.status);
-      return { title: SITE_NAME };
+      return { title: currentSite };
     }
   
     const json = await res.json();
     const homeData = json.data?.[0]?.attributes || {};
     const seo = getField(homeData, 'SEO');
     return {
-      title: getField(seo, 'meta_title') || getField(homeData, 'Hero_Title') || `${SITE_NAME}`,
+      title: getField(seo, 'meta_title') || getField(homeData, 'Hero_Title') || `${currentSite}`,
       description: getField(seo, 'meta_description') || "Expert-led tours in Northern Ethiopia.",
-      alternates: { canonical: `https://${SITE_NAME.toLowerCase()}` },
+      alternates: { canonical: `https://${currentSite.toLowerCase()}` },
     };
   } catch (error) {
-    return { title: SITE_NAME };
+    return { title: currentSite };
   }
 }
 
 export default async function Home() {
   const brand = getBrand();
+  const currentSite = getSiteName();
 
   //if(!brand?.docId) {
   //  return <div className="p-20 text-center font-black uppercase">Configuration Error: Brand ID Missing.</div>;
@@ -58,8 +62,8 @@ export default async function Home() {
   try {
     // Simplified population: hero_image is a direct media field
     const [homeRes, tourRes] = await Promise.all([
-      fetch(`${STRAPI_URL}/api/homepages?filters[domain][name][$eq]=${SITE_NAME}&populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`, { cache: 'no-store' }),
-      fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][name][$eq]=${SITE_NAME}`, { cache: 'no-store' })
+      fetch(`${STRAPI_URL}/api/homepages?filters[domain][name][$eq]=${currentSite}&populate[TrustBanner][populate]=*&populate[featured_types][populate]=*&populate[featured_tours][populate]=*&populate=hero_image`, { cache: 'no-store' }),
+      fetch(`${STRAPI_URL}/api/tours?populate=*&filters[domains][name][$eq]=${currentSite}`, { cache: 'no-store' })
     ]);
 
     let homeData = {};
@@ -97,7 +101,7 @@ export default async function Home() {
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50">
            <div className="text-center p-12 bg-white rounded-3xl shadow-sm border border-slate-100">
-             <h1 className="text-xl font-black uppercase italic text-slate-400">{SITE_NAME}</h1>
+             <h1 className="text-xl font-black uppercase italic text-slate-400">{currentSite}</h1>
              <p className="text-slate-400 mt-2">Content update in progress...</p>
            </div>
         </div>

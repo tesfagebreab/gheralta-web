@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect } from "react";
-import { getBrand, SITE_NAME } from "@/lib/constants";
+import { getBrand } from "@/lib/constants";
 import { clearCart } from "@/lib/cart";
 
 export default function SuccessPage() {

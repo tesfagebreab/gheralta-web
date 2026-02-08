@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link"; 
 import { notFound, useParams, useRouter } from "next/navigation";
-import { STRAPI_URL, SITE_NAME, getBrand, getStrapiMedia } from "@/lib/constants";
+import { STRAPI_URL, getBrand, getStrapiMedia } from "@/lib/constants";
+import { getSiteName } from '@/lib/server-utils';
 import { addToCart, getCart } from "@/lib/cart";
 import { Clock, Mountain, Map, MapPin, CheckCircle, Briefcase, Calendar } from "lucide-react";
 import React from 'react';
@@ -185,10 +186,10 @@ export default function TourDetail() {
     e.preventDefault();
     setIsSubmitting(true);
     const form = e.target as HTMLFormElement;
-    
+    const currentSite = getSiteName();
     const payload = {
       type: "INQUIRY",
-      siteName: SITE_NAME,
+      siteName: currentSite,
       data: {
         tourTitle: tour?.Title || "General Inquiry",
         fullName: (form[0] as HTMLInputElement).value || "",

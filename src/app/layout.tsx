@@ -4,7 +4,8 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SelectedToursFloat from "@/components/SelectedToursFloat";
-import { getBrand, SITE_NAME, STRAPI_URL, getStrapiMedia } from "@/lib/constants";
+import { getBrand, STRAPI_URL, getStrapiMedia } from "@/lib/constants";
+import { getSiteName } from '@/lib/server-utils';
 
 // Force fresh data on every request for multi-tenant domain switching
 export const dynamic = "force-dynamic";
@@ -40,8 +41,11 @@ const mono = JetBrains_Mono({
  * Helper to fetch brand-specific assets (Logo, Favicon) from Strapi v5
  */
 async function getBrandAssets() {
+
+  const currentSite = getSiteName(); // safe in server component
+
   try {
-    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${SITE_NAME}&populate=*`, {
+    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${currentSite}&populate=*`, {
       next: { revalidate: 3600 }
     });
     const json = await res.json();
@@ -68,7 +72,7 @@ export async function generateMetadata(): Promise<Metadata> {
       default: `${brandConfig.name} | Gheralta Mountains Expedition`,
     },
     description: brandConfig.description || `Expert-led tours and adventures in the Gheralta Mountains, Tigray.`,
-    metadataBase: new URL(`https://${SITE_NAME}`),
+    metadataBase: new URL(`https://${currentSite}`),
     // Mobile optimization: Explicitly defining sizes for different icon types
     icons: {
       icon: [

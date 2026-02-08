@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import { useEffect } from "react";
-import { SITE_NAME, getBrand } from "@/lib/constants";
+import {getBrand } from "@/lib/constants";
 
 export default function CancelPage() {
   const brand = getBrand();
 
   useEffect(() => {
-    document.title = `Booking Cancelled | ${SITE_NAME}`;
+    document.title = `Booking Cancelled | ${window.location.hostname.replace('www.', '')}`;
   }, []);
 
   return (
@@ -65,7 +65,7 @@ export default function CancelPage() {
         </div>
         
         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-          Secure Multi-Brand Architecture by {brand.name} {brand.name === 'Abune' ? 'Yemata' : SITE_NAME.includes('Tours') ? 'Tours' : 'Adventures'}
+          Secure Multi-Brand Architecture by {brand.name} {brand.name === 'Abune' ? 'Yemata' : window.location.hostname.replace('www.', '').includes('Tours') ? 'Tours' : 'Adventures'}
         </p>
       </div>
     </main>

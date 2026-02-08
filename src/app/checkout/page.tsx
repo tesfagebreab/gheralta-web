@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image'; 
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
+import { STRAPI_URL, getBrand, getField, getStrapiMedia } from "@/lib/constants";
 import { clearCart, getCart, removeFromCart } from "@/lib/cart";
 
 function CheckoutContent() {
@@ -34,7 +34,7 @@ function CheckoutContent() {
   }, [tourIdParam, router]);
 
   useEffect(() => {
-    document.title = `Secure Checkout | ${SITE_NAME}`;
+    document.title = `Secure Checkout | ${window.location.hostname.replace('www.', '')}`;
     const meta = document.createElement('meta');
     meta.name = "robots";
     meta.content = "noindex, nofollow";
@@ -162,7 +162,7 @@ function CheckoutContent() {
               + Add More
             </Link>
             <span className="text-[9px] font-bold text-stone-400 uppercase tracking-[0.2em]">
-              {SITE_NAME}
+              {window.location.hostname.replace('www.', '')}
             </span>
           </div>
         </header>
@@ -315,7 +315,7 @@ function CheckoutContent() {
                             return actions.order.create({
                               intent: "CAPTURE",
                               purchase_units: [{
-                                description: `${SITE_NAME} - ${tours.map(t => getField(t, 'title')).join(', ')}`,
+                                description: `${window.location.hostname.replace('www.', '')} - ${tours.map(t => getField(t, 'title')).join(', ')}`,
                                 amount: { currency_code: "USD", value: totalCostOfTours.toString() }
                               }]
                             });
@@ -334,7 +334,7 @@ function CheckoutContent() {
                                     phone: formData.phone,
                                     totalPaid: totalCostOfTours,
                                     bookingStatus: 'paid',
-                                    site_source: SITE_NAME,
+                                    site_source: window.location.hostname.replace('www.', ''),
                                     details: tours.map(t => ({
                                       title: getField(t, 'title'),
                                       date: t.selectedDate,
@@ -351,7 +351,7 @@ function CheckoutContent() {
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                   type: "BOOKING",
-                                  siteName: SITE_NAME,
+                                  siteName: window.location.hostname.replace('www.', ''),
                                   data: {
                                     tours: tours.map(t => `${getField(t, 'title')} (${t.selectedDate})`).join(', '),
                                     customerName: formData.fullName,

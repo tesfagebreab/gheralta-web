@@ -4,6 +4,15 @@
  * STRAPI_URL Sanitizer
  * Ensures the URL always has https:// even if the environment variable is missing it.
  */
+// src/lib/constants.ts
+
+/**
+ * STRAPI_URL Sanitizer
+ * Ensures the URL always has https:// even if the environment variable is missing it.
+ */
+
+// RAILPACK CACHE BUST - 2026-02-08 FINAL
+
 const getStrapiURL = () => {
   const url = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
   // If it's a local address or already has a protocol, return as is
@@ -19,38 +28,37 @@ export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.de
 
 /**
  * SITE_NAME logic: Detects the domain to apply brand-specific styling.
- * Fixed for SSR in production (Railway) using cookie set by middleware.
+ * Fixed for SSR in production (Railway) using request headers.
  */
 const getHostname = () => {
   const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
 
-  // Client-side (browser) - works as before
   if (typeof window !== "undefined") {
     const host = window.location.hostname.replace("www.", "").toLowerCase();
     if (host === "localhost" || host === "127.0.0.1") {
-       return (envSite || "gheraltatours.com").toLowerCase();
+      return (envSite || "gheraltatours.com").toLowerCase();
     }
     return host;
   }
 
-  // Server-side (SSR) - read cookie set by middleware
   try {
-    const { cookies } = require("next/headers");
+    const { cookies } = require('next/headers');
     const cookieStore = cookies();
-    const siteDomain = cookieStore.get("site_domain")?.value;
+    const siteDomain = cookieStore.get('site_domain')?.value;
+    console.log('[SSR getHostname] Cookie site_domain value:', siteDomain); // ← ADD THIS
     if (siteDomain) {
       return siteDomain.toLowerCase();
     }
-  } catch (e) {
-    // Ignore - fallback below
-  }
+  } catch (e: any) {
+  console.error('[SSR getHostname] Cookie read failed:', e.message); 
+  return (envSite || "gheraltatours.com").toLowerCase();
+}
 
-  // Final fallback (log for debugging)
-  console.warn("SITE_NAME fallback in SSR — check middleware/DNS");
+  console.warn('[SSR getHostname] Fallback triggered');
   return (envSite || "gheraltatours.com").toLowerCase();
 };
 
-export const SITE_NAME = getHostname();
+// Rest of your file unchanged (getField, getStrapiMedia, BRANDS with docId fallbacks, getBrand, getDynamicContact)
 
 /**
  * THE NORMALIZATION HELPER (Strapi v5 compatibility)
@@ -111,6 +119,7 @@ export const BRANDS = {
   "gheraltatours.com": {
     id: "tours",
     name: "Gheralta Tours",
+    docId: null, //zvmy0su5bbhsy9li5uipyzv9
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -127,6 +136,7 @@ export const BRANDS = {
   "gheraltaadventures.com": {
     id: "adventures",
     name: "Gheralta Adventures",
+    docId: null, //"gas2cz781h3wylgc5s4sqm4w"
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -143,6 +153,7 @@ export const BRANDS = {
   "abuneyemata.com": {
     id: "abuneyemata",
     name: "Abune Yemata",
+    docId: null, //"j39unsf7fqpb8q1o0eh7w9lp"
     accent: "text-slate-900",
     bgAccent: "bg-slate-900",
     borderAccent: "border-slate-900",
@@ -158,8 +169,12 @@ export const BRANDS = {
   }
 };
 
-export const getBrand = () => {
-  const match = Object.keys(BRANDS).find(key => key === SITE_NAME);
+export const getBrand = (domain?: string) => {
+  const activeDomain = domain || (typeof window !== "undefined" 
+    ? window.location.hostname.replace("www.", "").toLowerCase() 
+    : "gheraltatours.com");
+
+  const match = Object.keys(BRANDS).find(key => key === activeDomain);
   const brand = match ? BRANDS[match as keyof typeof BRANDS] : BRANDS["gheraltatours.com"];
   
   return {
@@ -174,41 +189,14 @@ export const getBrand = () => {
 };
 
 /**
- * getDynamicBrand (Async)
- * Fetches the documentId for the current domain record in Strapi
- */
-export async function getDynamicBrand() {
-  const baseBrand = getBrand();
-  try {
-    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${SITE_NAME}`, {
-      next: { revalidate: 3600 }
-    });
-    
-    const json = await res.json();
-    const domainDocId = json.data?.[0]?.documentId;
-
-    if (!domainDocId) {
-       console.warn(`[Constants] No Strapi domain record found for: ${SITE_NAME}`);
-    }
-
-    return {
-      ...baseBrand,
-      docId: domainDocId // No fallback - let pages handle missing
-    };
-    
-  } catch (error) {
-    console.error("[Constants] Dynamic Brand Fetch Error:", error);
-    return baseBrand;
-  }
-}
-
-/**
  * CONTACT_INFO (Dynamic & Relation-Aware)
  */
-export async function getDynamicContact() {
-  // Guard check to ensure URL is valid before fetching
+export async function getDynamicContact(domain?: string) {
+  const activeDomain = domain || (typeof window !== "undefined" 
+    ? window.location.hostname.replace("www.", "").toLowerCase() 
+    : "gheraltatours.com");
+
   if (!STRAPI_URL || STRAPI_URL.includes('undefined')) {
-    console.error("Fetch skipped: STRAPI_URL is invalid.");
     return {
       phone: "+251 928714272",
       whatsapp: "https://wa.me/251928714272",
@@ -228,14 +216,14 @@ export async function getDynamicContact() {
     
     const myContact = json.data?.find((c: any) => {
       const domainName = c.domain?.name; 
-      return domainName?.toLowerCase() === SITE_NAME.toLowerCase();
+      return domainName?.toLowerCase() === activeDomain.toLowerCase();
     });
 
     if (!myContact) {
       return {
         phone: "+251 928714272",
         whatsapp: "https://wa.me/251928714272",
-        email: SITE_NAME === "abuneyemata.com" ? "hello@abuneyemata.com" : "info@gheraltatours.com",
+        email: activeDomain === "abuneyemata.com" ? "hello@abuneyemata.com" : "info@gheraltatours.com",
         address: "Hawzen, Tigray, Ethiopia",
       };
     }

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { STRAPI_URL, SITE_NAME, getStrapiMedia, getBrand, getField } from "@/lib/constants";
+import { STRAPI_URL, getStrapiMedia, getBrand, getField } from "@/lib/constants";
 
 // --- HELPERS ---
 
@@ -47,7 +47,7 @@ export default function ToursPage() {
         const domainFiltered = data.filter((tour: any) => {
           const domains = tour.domains || [];
           if (domains.length === 0) return true; 
-          const targetBrand = SITE_NAME.toLowerCase().replace(/\s+/g, '');
+          const targetBrand = window.location.hostname.replace('www.', '').toLowerCase().replace(/\s+/g, '');
           return domains.some((d: any) => {
             const currentName = (d.name || d.Name || d.domain || "").toLowerCase().replace(/\s+/g, '');
             return currentName.includes(targetBrand);
@@ -133,7 +133,7 @@ const match = allTypes.find((ty: any) =>
           Our <span className={brand.accent}>Expeditions</span>
         </h1>
         <p className="text-slate-400 mt-3 md:mt-4 font-bold uppercase tracking-[0.2em] text-[9px] md:text-[10px]">
-          Curated experiences for {SITE_NAME}
+          Curated experiences for {window.location.hostname.replace('www.', '')}
         </p>
       </header>
 

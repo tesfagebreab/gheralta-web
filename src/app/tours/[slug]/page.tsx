@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 import TourDetail from "./TourClient";
-import { STRAPI_URL, SITE_NAME, getStrapiMedia } from "@/lib/constants";
+import { STRAPI_URL, getStrapiMedia } from "@/lib/constants";
+import { getSiteName } from '@/lib/server-utils';
+
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -8,6 +10,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const currentSite = getSiteName ();
   
   try {
     // We use $eqi (case-insensitive) to be as flexible as possible
@@ -40,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       const tourTitle = attr.Title || attr.title || "Adventure Tour";
       const seo = attr.seo;
       
-      const metaTitle = seo?.metaTitle || seo?.meta_image || `${tourTitle} | ${SITE_NAME}`;
+      const metaTitle = seo?.metaTitle || seo?.meta_image || `${tourTitle} | ${currentSite}`;
       const metaDesc = seo?.metaDescription || seo?.meta_description || `Join us for the ${tourTitle} in the Gheralta mountains.`;
 
       const seoImage = seo?.metaImage || seo?.meta_image;
@@ -68,12 +71,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     // This triggers if Strapi returns an empty array []
     return { 
-      title: `${slug.replace(/-/g, ' ')} | ${SITE_NAME}`, 
+      title: `${slug.replace(/-/g, ' ')} | ${currentSite}`, 
     };
 
   } catch (e) {
     console.error("Metadata generation error:", e);
-    return { title: SITE_NAME };
+    return { title: currentSite };
   }
 }
 

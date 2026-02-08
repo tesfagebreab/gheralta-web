@@ -1,6 +1,9 @@
-import { STRAPI_URL, SITE_NAME } from '@/lib/constants';
+import { STRAPI_URL} from '@/lib/constants';
+import { getSiteName } from '@/lib/server-utils';
 
 export default async function DebugPage() {
+
+  const currentSite = getSiteName(); // safe in server component
   let allData = null;
   let error = null;
   // We remove the filter from the URL to stop the 400 error
@@ -16,7 +19,7 @@ export default async function DebugPage() {
   // Look for the specific brand in the returned list
   const myBrand = allData?.data?.find((item: any) => {
     const values = Object.values(item).map(v => String(v).toLowerCase());
-    return values.some(v => v.includes(SITE_NAME.toLowerCase()));
+    return values.some(v => v.includes(currentSite.toLowerCase()));
   });
 
   return (
@@ -25,7 +28,7 @@ export default async function DebugPage() {
       
       <div className="space-y-6">
         <section className="bg-blue-50 p-4 border border-blue-200 rounded">
-          <p><strong>Current Domain (SITE_NAME):</strong> {SITE_NAME}</p>
+          <p><strong>Current Domain (currentSite):</strong> {currentSite}</p>
           <p><strong>Brand Found in List:</strong> {myBrand ? "✅ Yes" : "❌ No"}</p>
         </section>
 

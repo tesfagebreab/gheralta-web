@@ -1,4 +1,5 @@
-import { STRAPI_URL, SITE_NAME, getBrand, getField, getStrapiMedia } from "@/lib/constants";
+import { STRAPI_URL, getBrand, getField, getStrapiMedia } from "@/lib/constants";
+import { getSiteName } from '@/lib/server-utils';
 import { Metadata } from "next";
 import Link from "next/link";
 
@@ -65,6 +66,8 @@ const renderStrapiBlocks = (content: any) => {
 
 // --- DATA FETCHING ---
 async function getBookingTermsForDomain() {
+const currentSite = getSiteName(); // safe in server component
+
   try {
     const res = await fetch(`${STRAPI_URL}/api/booking-terms?populate=*`, {
       cache: 'no-store'
@@ -77,7 +80,7 @@ async function getBookingTermsForDomain() {
     return allTerms.find((item: any) => {
       const domainData = item.domain || item.attributes?.domain;
       const domainName = domainData?.domain || domainData?.name || "";
-      return domainName.toLowerCase().includes(SITE_NAME.split(' ')[0].toLowerCase());
+      return domainName.toLowerCase().includes(currentSite.split(' ')[0].toLowerCase());
     });
   } catch (error) {
     console.error("Booking Terms Fetch Error:", error);
@@ -87,13 +90,14 @@ async function getBookingTermsForDomain() {
 
 // --- SEO ---
 export async function generateMetadata(): Promise<Metadata> {
+  const currentSite = getSiteName(); // safe in server component
   const data = await getBookingTermsForDomain();
   const seo = getField(data, 'seo');
   const metaImg = getField(seo, 'meta_image');
 
   return {
-    title: getField(seo, 'meta_title') || `Booking Terms | ${SITE_NAME}`,
-    description: getField(seo, 'meta_description') || `Travel terms for ${SITE_NAME}`,
+    title: getField(seo, 'meta_title') || `Booking Terms | ${currentSite}`,
+    description: getField(seo, 'meta_description') || `Travel terms for ${currentSite}`,
     openGraph: {
       images: metaImg ? [getStrapiMedia(metaImg)] : [],
     }
@@ -103,13 +107,14 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function BookingTermsPage() {
   const brand = getBrand();
   const data = await getBookingTermsForDomain();
+  const currentSite = getSiteName();
 
   if (!data) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-center p-10 bg-[#fafaf9]">
         <h1 className="text-2xl font-black uppercase italic text-stone-400">Not Found</h1>
         <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mt-2">
-           No terms linked to {SITE_NAME}
+           No terms linked to {currentSite}
         </p>
         <Link href="/" className="mt-8 text-[10px] font-black uppercase tracking-widest border-b-2 border-stone-900 pb-1">Return Home</Link>
       </div>
@@ -148,7 +153,7 @@ export default async function BookingTermsPage() {
         {/* FOOTER METADATA */}
         <div className="mt-16 flex flex-col md:flex-row items-center justify-between gap-6 border-t border-stone-200 pt-10">
           <p className="text-stone-900 font-serif italic text-sm">
-            {SITE_NAME} &copy; {new Date().getFullYear()}
+            {currentSite} &copy; {new Date().getFullYear()}
           </p>
           <div className="text-center md:text-right">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 mb-1">Last Updated</p>

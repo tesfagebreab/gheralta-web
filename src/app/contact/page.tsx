@@ -1,5 +1,6 @@
 import { Metadata } from "next";
-import { STRAPI_URL, getBrand, getDynamicContact, SITE_NAME, getField, getStrapiMedia } from "@/lib/constants";
+import { STRAPI_URL, getBrand, getDynamicContact, getField, getStrapiMedia } from "@/lib/constants";
+import { getSiteName } from '@/lib/server-utils';
 import ContactForm from "@/components/ContactForm";
 import Link from "next/link";
 
@@ -27,9 +28,12 @@ const parseStrapiBlocks = (content: any): string => {
 
 // --- DYNAMIC SEO ---
 export async function generateMetadata(): Promise<Metadata> {
+
+const currentSite = getSiteName(); // safe in server component
+
   try {
     // Using containsi for flexible domain matching in Strapi v5
-    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$containsi]=${SITE_NAME}`, { 
+    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$containsi]=${currentSite}`, { 
       cache: 'no-store'
     });
     const json = await res.json();
@@ -39,14 +43,14 @@ export async function generateMetadata(): Promise<Metadata> {
     const metaImg = getField(seo, 'meta_image');
 
     return {
-      title: getField(seo, 'meta_title') || `Contact Us | ${SITE_NAME}`,
-      description: getField(seo, 'meta_description') || `Get in touch with the ${SITE_NAME} team.`,
+      title: getField(seo, 'meta_title') || `Contact Us | ${currentSite}`,
+      description: getField(seo, 'meta_description') || `Get in touch with the ${currentSite} team.`,
       openGraph: {
         images: metaImg ? [getStrapiMedia(metaImg)] : [],
       }
     };
   } catch (error) {
-    return { title: `Contact | ${SITE_NAME}` };
+    return { title: `Contact | ${currentSite}` };
   }
 }
 
@@ -56,6 +60,7 @@ export default async function ContactPage({
   searchParams: Promise<{ inquiry?: string }> 
 }) {
   const brand = getBrand();
+  const currentSite = getSiteName(); // safe in server component
   
   try {
     // Next.js 15 requires awaiting searchParams
@@ -126,7 +131,7 @@ export default async function ContactPage({
                  brand={brand} 
                  initialInterest={initialInterest} 
                  inputStyles={inputStyles} 
-                 siteName={SITE_NAME}
+                 siteName={currentSite}
                />
 
                <p className="text-[9px] md:text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-8 md:mt-10 text-center px-4 leading-loose">
@@ -142,7 +147,7 @@ export default async function ContactPage({
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-center p-10 bg-[#fafaf9]">
         <h1 className="text-2xl font-black uppercase italic text-red-500 tracking-tighter">Connection Error</h1>
-        <p className="text-stone-400 text-[9px] md:text-[10px] font-bold uppercase tracking-widest mt-2">Checking Connection for {SITE_NAME}...</p>
+        <p className="text-stone-400 text-[9px] md:text-[10px] font-bold uppercase tracking-widest mt-2">Checking Connection for {currentSite}...</p>
         <Link href="/" className="mt-8 text-[9px] md:text-[10px] font-black uppercase tracking-widest border-b-2 border-stone-200 pb-1 text-stone-900">Return Home</Link>
       </div>
     );
