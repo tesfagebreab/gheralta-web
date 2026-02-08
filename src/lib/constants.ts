@@ -122,15 +122,25 @@ export const BRANDS = {
 };
 
 /**
- * BRAND GETTER (Normalized for V5)
+ * BRAND GETTER (Universal Logic)
  */
 export const getBrand = (domain?: string) => {
-  const activeDomain = domain || (typeof window !== "undefined" 
-    ? window.location.hostname.replace("www.", "").toLowerCase() 
-    : "gheraltatours.com");
+  let activeDomain = "gheraltatours.com";
 
-  const match = Object.keys(BRANDS).find(key => key.toLowerCase() === activeDomain.toLowerCase());
-  const brand = match ? BRANDS[match as keyof typeof BRANDS] : BRANDS["gheraltatours.com"];
+  if (domain) {
+    // 1. Explicit domain passed from Server Component
+    activeDomain = domain;
+  } else if (typeof window !== "undefined") {
+    // 2. Client-side detection
+    activeDomain = window.location.hostname;
+  }
+
+  // Clean the domain (remove www. and port numbers)
+  activeDomain = activeDomain.replace("www.", "").split(":")[0].toLowerCase();
+
+  // Find a match based on partial string (handles railway app urls temporarily if needed)
+  const match = Object.keys(BRANDS).find(key => activeDomain.includes(key)) || "gheraltatours.com";
+  const brand = BRANDS[match as keyof typeof BRANDS];
   
   return {
     ...brand,
@@ -147,9 +157,8 @@ export const getBrand = (domain?: string) => {
  * CONTACT_INFO (Dynamic & Relation-Aware)
  */
 export async function getDynamicContact(domain?: string) {
-  const activeDomain = domain || (typeof window !== "undefined" 
-    ? window.location.hostname.replace("www.", "").toLowerCase() 
-    : "gheraltatours.com");
+  const brandData = getBrand(domain);
+  const activeDomain = brandData.email.split('@')[1]; // Derived from brand data fallback
 
   try {
     const res = await fetch(`${STRAPI_URL}/api/contact-infos?populate=domain`, { 
@@ -160,20 +169,17 @@ export async function getDynamicContact(domain?: string) {
     if (!res.ok) throw new Error("Fetch failed");
     const json = await res.json();
     
-    // MATCHING LOGIC: Target c.domain.name based on Strapi V5 response
     const myContact = json.data?.find((c: any) => {
-      // Use getField to handle potential V5 nesting variations
       const domainData = getField(c, 'domain');
       const dName = getField(domainData, 'name') || c.domain?.name;
-      return dName?.toLowerCase() === activeDomain.toLowerCase();
+      return dName?.toLowerCase().includes(activeDomain.toLowerCase());
     });
 
     if (!myContact) {
-      console.warn(`No match for ${activeDomain}. Check if domain name matches exactly in Strapi.`);
       return {
         phone: "+251 928714272",
         whatsapp: "https://wa.me/251928714272",
-        email: activeDomain === "abuneyemata.com" ? "hello@abuneyemata.com" : "info@gheraltatours.com",
+        email: brandData.email,
         address: "Hawzen, Tigray, Ethiopia",
       };
     }
@@ -190,7 +196,7 @@ export async function getDynamicContact(domain?: string) {
     return {
       phone: "+251 928714272",
       whatsapp: "https://wa.me/251928714272",
-      email: "info@gheraltatours.com",
+      email: brandData.email,
       address: "Hawzen, Tigray, Ethiopia",
     };
   }
