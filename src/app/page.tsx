@@ -97,7 +97,7 @@ export default async function Home() {
     const hasFeatured = Array.isArray(strapiFeaturedTours) && strapiFeaturedTours.length > 0;
     const displayTours = hasFeatured ? strapiFeaturedTours : allTours;
 
-    if (!heroTitle) {
+    /*if (!heroTitle) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50">
            <div className="text-center p-12 bg-white rounded-3xl shadow-sm border border-slate-100">
@@ -107,7 +107,7 @@ export default async function Home() {
         </div>
       );
     }
-
+*/
     return (
       <main className="min-h-screen bg-slate-50 font-sans overflow-x-hidden">
         {/* HERO SECTION - Adjusted alignment to sit just below menu titles */}
