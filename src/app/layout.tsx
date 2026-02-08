@@ -59,6 +59,7 @@ async function getBrandAssets() {
 export async function generateMetadata(): Promise<Metadata> {
   const brandConfig = getBrand();
   const brandData = await getBrandAssets();
+  const currentSite = getSiteName();
   
   // Navigate the Strapi v5 media object structure properly
   const faviconObj = brandData?.attributes?.favicon?.data || brandData?.favicon?.data;
