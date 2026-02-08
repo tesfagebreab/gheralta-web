@@ -1,9 +1,11 @@
 "use client";
 import Link from "next/link";
 import { getBrand } from "@/lib/constants";
+import { getSiteName } from '@/lib/server-utils';
 
 export default function NotFound() {
   const brand = getBrand();
+  const currentSite = getSiteName();
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen md:min-h-[70vh] px-6 text-center font-sans relative overflow-hidden">
@@ -17,7 +19,7 @@ export default function NotFound() {
           Expedition <span className={brand.accent}>Off-Track</span>
         </h2>
         <p className="text-slate-500 text-sm md:text-base max-w-xs md:max-w-md mx-auto font-medium leading-relaxed">
-          It looks like the path you're looking for doesn't exist on <strong>{window.location.hostname.replace('www.', '')}</strong>. 
+          It looks like the path you're looking for doesn't exist on <strong>{currentSite}</strong>. 
           Let's get you back to the base camp.
         </p>
       </div>
