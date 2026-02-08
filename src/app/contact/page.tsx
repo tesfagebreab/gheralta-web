@@ -28,16 +28,20 @@ const parseStrapiBlocks = (content: any): string => {
 
 // --- DYNAMIC SEO ---
 export async function generateMetadata(): Promise<Metadata> {
-
-const currentSite = await getSiteName(); // safe in server component
+  const currentSite = await getSiteName();
 
   try {
-    // Using containsi for flexible domain matching in Strapi v5
-    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$containsi]=${currentSite}`, { 
+    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$containsi]=${currentSite}&populate=*`, { 
       cache: 'no-store'
     });
+    
+    if (!res.ok) return { title: `Contact | ${currentSite}` };
+
     const json = await res.json();
-    const data = json.data?.[0] || {};
+    
+    // Strapi v5 Normalization: Check for attributes or direct object
+    const rawData = json.data?.[0];
+    const data = rawData?.attributes || rawData || {};
     
     const seo = getField(data, 'seo');
     const metaImg = getField(seo, 'meta_image');
@@ -50,6 +54,7 @@ const currentSite = await getSiteName(); // safe in server component
       }
     };
   } catch (error) {
+    console.error("Metadata fetch error:", error);
     return { title: `Contact | ${currentSite}` };
   }
 }
@@ -60,14 +65,13 @@ export default async function ContactPage({
   searchParams: Promise<{ inquiry?: string }> 
 }) {
   const brand = getBrand();
-  const currentSite = await getSiteName(); // safe in server component
+  const currentSite = await getSiteName();
   
   try {
-    // Next.js 15 requires awaiting searchParams
     const resolvedParams = await searchParams;
     const initialInterest = resolvedParams?.inquiry || "";
 
-    // Fetch dynamic phone, whatsapp, address, and email from Strapi logic
+    // Fetch dynamic phone, whatsapp, address, and email
     const contact = await getDynamicContact();
 
     // Standardized input styles following the sandstone palette (#c2410c)
@@ -102,7 +106,7 @@ export default async function ContactPage({
                      </a>
                  </div>
                  
-                 {/* Direct Email Card - Now Dynamically Populated */}
+                 {/* Direct Email Card */}
                  <div className="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-stone-100 shadow-sm hover:shadow-md transition-shadow">
                      <h3 className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 mb-2 md:mb-3">Direct Email</h3>
                      <p className="text-xl md:text-2xl font-black text-stone-900 mb-1 break-all">{contact.email}</p>
