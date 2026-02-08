@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getBrand } from "@/lib/constants";
 import { getSiteName } from '@/lib/server-utils';
 
-export default function NotFound() {
+export default async function NotFound() {
   const brand = getBrand();
   const currentSite = await getSiteName();
 
