@@ -30,7 +30,7 @@ export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.de
 const getHostname = () => {
   const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME;
 
-  // Client-side (browser) - works as before
+  // Client-side
   if (typeof window !== "undefined") {
     const host = window.location.hostname.replace("www.", "").toLowerCase();
     if (host === "localhost" || host === "127.0.0.1") {
@@ -39,17 +39,18 @@ const getHostname = () => {
     return host;
   }
 
-  // Server-side (SSR) - critical fix for production
+  // Server-side (SSR) - read cookie set by middleware
   try {
-    const { headers } = require("next/headers");
-    const headersList = headers();
-    const host = headersList.get("x-forwarded-host") || headersList.get("host") || "";
-    const domain = host.replace("www.", "").split(":")[0].toLowerCase(); // strip port if present
-    return domain || (envSite || "gheraltatours.com").toLowerCase();
+    const { cookies } = require('next/headers');
+    const cookieDomain = cookies().get('site_domain')?.value;
+    if (cookieDomain) {
+      return cookieDomain.toLowerCase();
+    }
   } catch (e) {
-    // Fallback for build time or errors
-    return (envSite || "gheraltatours.com").toLowerCase();
+    // Fallback
   }
+
+  return (envSite || "gheraltatours.com").toLowerCase();
 };
 
 export const SITE_NAME = getHostname();
