@@ -191,7 +191,6 @@ export async function getDynamicContact(domain?: string) {
       maps: myContact.Maps_Link
     };
   } catch (error) {
-    // console.error("Dynamic Contact Fetch Error:", error);
     return {
       phone: "+251 928714272",
       whatsapp: "https://wa.me/251928714272",

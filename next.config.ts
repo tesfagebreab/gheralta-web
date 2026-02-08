@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+output: 'standalone', // This is essential for Docker/Railway deployments
+
   images: {
     // Automatically convert images to WebP for better performance
     formats: ['image/webp'],

@@ -40,7 +40,7 @@ const mono = JetBrains_Mono({
 /**
  * Helper to fetch brand-specific assets (Logo, Favicon) from Strapi v5
  */
-async function getBrandAssets() {
+export async function getBrandAssets() {
 
   const currentSite = await getSiteName(); // safe in server component
 
