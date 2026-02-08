@@ -19,7 +19,6 @@ const parseStrapiBlocks = (content: any): string => {
 };
 
 export default async function Footer() {
-
   const currentSite = await getSiteName(); // safe in server component
   const brand = getBrand();
   
@@ -38,15 +37,20 @@ export default async function Footer() {
     const domainJson = await domainRes.json();
     
     if (domainJson.data && Array.isArray(domainJson.data)) {
-      const myDomainData = domainJson.data.find((d: any) => {
-        const dName = d.domain || d.name || d.attributes?.domain || d.attributes?.name;
+      // Strapi V5 Normalization: Check both root and attributes
+      const myDomainEntry = domainJson.data.find((d: any) => {
+        const item = d.attributes || d;
+        const dName = item.domain || item.name;
         return dName?.toLowerCase().includes(currentSite.toLowerCase());
       });
 
-      const rawLogo = myDomainData?.brand_logo || myDomainData?.attributes?.brand_logo;
+      if (myDomainEntry) {
+        const normalizedDomain = myDomainEntry.attributes || myDomainEntry;
+        const rawLogo = normalizedDomain.brand_logo;
 
-      if (rawLogo) {
-        logoUrl = getStrapiMedia(rawLogo, 'small');
+        if (rawLogo) {
+          logoUrl = getStrapiMedia(rawLogo, 'small');
+        }
       }
     }
   } catch (e) {
