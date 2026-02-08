@@ -7,7 +7,9 @@ export function getSiteName(): string {
   const envSite = process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME || "gheraltatours.com";
 
   try {
-    const cookieStore = cookies();
+    
+    // @ts-ignore - server-only import in server file
+    const cookieStore = await cookies();
     const siteDomain = cookieStore.get('site_domain')?.value;
     if (siteDomain) {
       console.log(`SSR SITE_NAME from cookie: ${siteDomain}`);
