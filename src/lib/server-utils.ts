@@ -9,7 +9,7 @@ export function getSiteName(): string {
   try {
     
     // @ts-ignore - server-only import in server file
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const siteDomain = cookieStore.get('site_domain')?.value;
     if (siteDomain) {
       console.log(`SSR SITE_NAME from cookie: ${siteDomain}`);
