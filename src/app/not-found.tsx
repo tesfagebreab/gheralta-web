@@ -5,7 +5,7 @@ import { getSiteName } from '@/lib/server-utils';
 
 export default function NotFound() {
   const brand = getBrand();
-  const currentSite = getSiteName();
+  const currentSite = await getSiteName();
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen md:min-h-[70vh] px-6 text-center font-sans relative overflow-hidden">

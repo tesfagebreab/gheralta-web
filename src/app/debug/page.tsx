@@ -3,7 +3,7 @@ import { getSiteName } from '@/lib/server-utils';
 
 export default async function DebugPage() {
 
-  const currentSite = getSiteName(); // safe in server component
+  const currentSite = await getSiteName(); // safe in server component
   let allData = null;
   let error = null;
   // We remove the filter from the URL to stop the 400 error

@@ -42,7 +42,7 @@ const mono = JetBrains_Mono({
  */
 async function getBrandAssets() {
 
-  const currentSite = getSiteName(); // safe in server component
+  const currentSite = await getSiteName(); // safe in server component
 
   try {
     const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${currentSite}&populate=*`, {
@@ -59,7 +59,7 @@ async function getBrandAssets() {
 export async function generateMetadata(): Promise<Metadata> {
   const brandConfig = getBrand();
   const brandData = await getBrandAssets();
-  const currentSite = getSiteName();
+  const currentSite = await getSiteName();
   
   // Navigate the Strapi v5 media object structure properly
   const faviconObj = brandData?.attributes?.favicon?.data || brandData?.favicon?.data;

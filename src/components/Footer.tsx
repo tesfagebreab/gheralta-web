@@ -20,7 +20,7 @@ const parseStrapiBlocks = (content: any): string => {
 
 export default async function Footer() {
 
-  const currentSite = getSiteName(); // safe in server component
+  const currentSite = await getSiteName(); // safe in server component
   const brand = getBrand();
   
   let contact = { phone: "", address: "", whatsapp: "" };

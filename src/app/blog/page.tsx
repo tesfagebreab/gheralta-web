@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function BlogPage() {
   const brand = getBrand();
-  const currentSite = getSiteName ();
+  const currentSite = await getSiteName ();
 
   try {
     const res = await fetch(

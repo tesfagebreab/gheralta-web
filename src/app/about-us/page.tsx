@@ -38,7 +38,7 @@ const parseStrapiList = (content: any): string[] => {
 
 // --- DYNAMIC SEO ---
 export async function generateMetadata(): Promise<Metadata> {
-  const currentSite = getSiteName()
+  const currentSite = await getSiteName()
   try {
     const res = await fetch(`${STRAPI_URL}/api/about-uses?filters[domain][name][$eq]=${currentSite}`, { 
       cache: 'no-store'
@@ -67,7 +67,7 @@ export default async function AboutUs({
   }) {
   await searchParams;
   const brand = getBrand();
-  const currentSite = getSiteName()
+  const currentSite = await getSiteName()
   
   try {
     const res = await fetch(

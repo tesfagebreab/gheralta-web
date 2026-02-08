@@ -1,10 +1,8 @@
 // src/lib/constants.ts
-
 // RAILPACK CACHE BUST - 2026-02-08 FINAL
 
 /**
  * STRAPI_URL Sanitizer
- * Ensures the URL always has https:// even if the environment variable is missing it.
  */
 const getStrapiURL = () => {
   const url = process.env.NEXT_PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
@@ -70,12 +68,13 @@ export const getStrapiMedia = (media: any, format: 'small' | 'medium' | 'thumbna
 export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
 
 /**
- * BRAND ATTRIBUTES (no docId hardcoded)
+ * BRAND ATTRIBUTES
  */
 export const BRANDS = {
   "gheraltatours.com": {
     id: "tours",
     name: "Gheralta Tours",
+    docId: "zvmy0su5bbhsy9li5uipyzv9",
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -92,6 +91,7 @@ export const BRANDS = {
   "gheraltaadventures.com": {
     id: "adventures",
     name: "Gheralta Adventures",
+    docId: "gas2cz781h3wylgc5s4sqm4w",
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -108,6 +108,7 @@ export const BRANDS = {
   "abuneyemata.com": {
     id: "abuneyemata",
     name: "Abune Yemata",
+    docId: "j39unsf7fqpb8q1o0eh7w9lp",
     accent: "text-slate-900",
     bgAccent: "bg-slate-900",
     borderAccent: "border-slate-900",
@@ -127,9 +128,6 @@ export const getBrand = (domain?: string) => {
   const activeDomain = domain || (typeof window !== "undefined" 
     ? window.location.hostname.replace("www.", "").toLowerCase() 
     : "gheraltatours.com");
-
-  // Optional debug (uncomment if needed)
-  // console.log('[getBrand] Active domain:', activeDomain);
 
   const match = Object.keys(BRANDS).find(key => key === activeDomain);
   const brand = match ? BRANDS[match as keyof typeof BRANDS] : BRANDS["gheraltatours.com"];
@@ -152,9 +150,6 @@ export async function getDynamicContact(domain?: string) {
   const activeDomain = domain || (typeof window !== "undefined" 
     ? window.location.hostname.replace("www.", "").toLowerCase() 
     : "gheraltatours.com");
-
-  // Optional debug (uncomment if needed)
-  // console.log('[getDynamicContact] Active domain:', activeDomain);
 
   if (!STRAPI_URL || STRAPI_URL.includes('undefined')) {
     return {
@@ -196,7 +191,7 @@ export async function getDynamicContact(domain?: string) {
       maps: myContact.Maps_Link
     };
   } catch (error) {
-    console.error("Dynamic Contact Fetch Error:", error);
+    // console.error("Dynamic Contact Fetch Error:", error);
     return {
       phone: "+251 928714272",
       whatsapp: "https://wa.me/251928714272",

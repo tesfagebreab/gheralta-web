@@ -29,7 +29,7 @@ const parseStrapiBlocks = (content: any): string => {
 // --- DYNAMIC SEO ---
 export async function generateMetadata(): Promise<Metadata> {
 
-const currentSite = getSiteName(); // safe in server component
+const currentSite = await getSiteName(); // safe in server component
 
   try {
     // Using containsi for flexible domain matching in Strapi v5
@@ -60,7 +60,7 @@ export default async function ContactPage({
   searchParams: Promise<{ inquiry?: string }> 
 }) {
   const brand = getBrand();
-  const currentSite = getSiteName(); // safe in server component
+  const currentSite = await getSiteName(); // safe in server component
   
   try {
     // Next.js 15 requires awaiting searchParams

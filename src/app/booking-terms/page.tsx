@@ -66,7 +66,7 @@ const renderStrapiBlocks = (content: any) => {
 
 // --- DATA FETCHING ---
 async function getBookingTermsForDomain() {
-const currentSite = getSiteName(); // safe in server component
+const currentSite = await getSiteName(); // safe in server component
 
   try {
     const res = await fetch(`${STRAPI_URL}/api/booking-terms?populate=*`, {
@@ -90,7 +90,7 @@ const currentSite = getSiteName(); // safe in server component
 
 // --- SEO ---
 export async function generateMetadata(): Promise<Metadata> {
-  const currentSite = getSiteName(); // safe in server component
+  const currentSite = await getSiteName(); // safe in server component
   const data = await getBookingTermsForDomain();
   const seo = getField(data, 'seo');
   const metaImg = getField(seo, 'meta_image');
@@ -107,7 +107,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function BookingTermsPage() {
   const brand = getBrand();
   const data = await getBookingTermsForDomain();
-  const currentSite = getSiteName();
+  const currentSite = await getSiteName();
 
   if (!data) {
     return (

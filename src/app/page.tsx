@@ -28,7 +28,7 @@ const parseStrapiBlocks = (content: any): string => {
 
 export async function generateMetadata(): Promise <Metadata> {
   const brand = getBrand();
-  const currentSite = getSiteName();
+  const currentSite = await getSiteName();
 
  // if (!brand?.docId) return { title: SITE_NAME };
   try {
@@ -53,7 +53,7 @@ export async function generateMetadata(): Promise <Metadata> {
 
 export default async function Home() {
   const brand = getBrand();
-  const currentSite = getSiteName();
+  const currentSite = await getSiteName();
 
   //if(!brand?.docId) {
   //  return <div className="p-20 text-center font-black uppercase">Configuration Error: Brand ID Missing.</div>;

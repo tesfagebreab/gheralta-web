@@ -80,7 +80,7 @@ const RenderBlocks = ({ content, accentColor }: { content: any[], accentColor: s
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const currentSite = getSiteName(); // safe in server component
+  const currentSite = await getSiteName(); // safe in server component
 
   try {
     const res = await fetch(`${STRAPI_URL}/api/posts?filters[slug][$eq]=${slug}&populate=*`);
@@ -99,7 +99,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
   const brand = getBrand();
-  const currentSite = getSiteName(); // safe in server component
+  const currentSite = await getSiteName(); // safe in server component
 
   const fetchUrl = `${STRAPI_URL}/api/posts?filters[slug][$eq]=${slug}&populate=*`;
   const res = await fetch(fetchUrl, { cache: 'no-store' });

@@ -10,7 +10,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const currentSite = getSiteName ();
+  const currentSite = await getSiteName ();
   
   try {
     // We use $eqi (case-insensitive) to be as flexible as possible
