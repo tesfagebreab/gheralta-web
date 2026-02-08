@@ -2,7 +2,7 @@
 
 @layer base {
   :root {
-    /* DEFAULT: Gheralta Tours (Sandstone) */
+    /* DEFAULT: Gheralta Tours (Sandstone/Burnt Clay) */
     --background: #fafaf9; /* stone-50 */
     --foreground: #1c1917; /* stone-900 */
     --brand-accent: #c2410c; 
@@ -15,7 +15,7 @@
   }
 
   /* BRAND: Abune Yemata (Ancient Crimson & Dark Stone) */
-  .brand-abuneyemata {
+  [data-brand="abuneyemata"] {
     --brand-accent: #991b1b; /* deep crimson */
     --brand-accent-hover: #7f1d1d;
     --background: #fef2f2; /* very faint red tint */
@@ -23,7 +23,7 @@
   }
 
   /* BRAND: Gheralta Adventures (Trek Green & Earth) */
-  .brand-adventures {
+  [data-brand="adventures"] {
     --brand-accent: #15803d; /* forest green */
     --brand-accent-hover: #166534;
     --background: #f0fdf4; /* very faint green tint */
@@ -38,8 +38,8 @@
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
     width: 100%;
-    /* Mobile-optimized background: fixed doesn't always play nice on iOS, so we use a pseudo-element */
     position: relative;
+    transition: background-color 0.3s ease; /* Smooth transition when brand changes */
   }
 
   body::before {
@@ -54,6 +54,7 @@
 }
 
 @theme {
+  /* Standard Stone Palette */
   --color-stone-50: #fafaf9;
   --color-stone-100: #f5f5f4;
   --color-stone-200: #e7e5e4;
@@ -64,8 +65,12 @@
   --color-stone-800: #292524;
   --color-stone-900: #1c1917;
 
+  /* Dynamic Brand Mappings */
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-hover: var(--brand-accent-hover);
   --color-accent: var(--brand-accent);
   --color-accent-hover: var(--brand-accent-hover);
+  
   --color-whatsapp: #25d366;
 
   --font-sans: var(--font-sans);
@@ -98,7 +103,7 @@
     @apply inline-flex items-center justify-center px-8 py-4 
            bg-stone-900 text-stone-50 rounded-full font-black
            text-[10px] uppercase tracking-[0.2em]
-           hover:bg-accent transition-all duration-300 
+           hover:bg-brand-accent transition-all duration-300 
            cursor-pointer shadow-lg hover:-translate-y-1 active:translate-y-0;
   }
 
@@ -107,7 +112,7 @@
   .price-label { @apply text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 mb-0.5; }
   .price-request {
     @apply font-serif italic text-stone-500 text-base border-b border-stone-200 pb-0.5 
-           hover:text-accent hover:border-accent transition-all duration-300 cursor-pointer;
+           hover:text-brand-accent hover:border-brand-accent transition-all duration-300 cursor-pointer;
   }
 }
 
@@ -117,7 +122,7 @@
   .prose-gheralta h2 {
     @apply font-serif italic text-3xl md:text-5xl text-stone-900 mb-6 mt-12 md:mb-8 md:mt-16 
            tracking-tight leading-tight md:leading-none uppercase border-l-4 md:border-l-8 
-           border-accent pl-4 md:pl-6;
+           border-brand-accent pl-4 md:pl-6;
   }
   .prose-gheralta h3 { @apply font-sans font-black text-lg md:text-xl uppercase tracking-widest text-stone-800 mb-4 mt-10 md:mt-12; }
   .prose-gheralta blockquote {
@@ -126,7 +131,7 @@
   }
   .prose-gheralta blockquote::before {
     content: "“";
-    @apply absolute top-2 left-4 md:top-4 md:left-6 text-4xl md:text-6xl text-accent opacity-20 font-serif;
+    @apply absolute top-2 left-4 md:top-4 md:left-6 text-4xl md:text-6xl text-brand-accent opacity-20 font-serif;
   }
   .prose-gheralta img { @apply max-w-full h-auto rounded-2xl my-8; }
 }
