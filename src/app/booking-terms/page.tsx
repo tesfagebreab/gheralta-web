@@ -65,13 +65,24 @@ const renderStrapiBlocks = (content: any) => {
 };
 
 // --- DATA FETCHING ---
-async function getBookingTermsForDomain() {
-const currentSite = await getSiteName(); // safe in server component
+export async function getBookingTermsForDomain() {
+  const currentSite = await getSiteName(); // safe in server component
 
   try {
-    const res = await fetch(`${STRAPI_URL}/api/booking-terms?populate=*`, {
-      cache: 'no-store'
-    });
+    const res = await fetch(
+      `${STRAPI_URL}/api/booking-terms?` +
+      new URLSearchParams({
+        'filters[domain][name][$eq]': currentSite,  // ← this is the critical fix
+        'populate': '*',                            // or '*.*' if you need deep relations
+      }).toString(),
+      { cache: 'no-store' }
+    );
+
+    if (!res.ok) {
+      console.warn(`Booking terms fetch failed for ${currentSite}: ${res.status}`);
+      return null; // or fallback object
+    }
+    
     const json = await res.json();
     const allTerms = json.data;
 
