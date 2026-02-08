@@ -1,5 +1,7 @@
 // src/lib/constants.ts
-// RAILPACK CACHE BUST - 2026-02-08 FINAL
+// RAILPACK CACHE BUST - 2026-02-08 FINAL - STRAPI V5 COMPATIBLE
+
+import { getSiteName } from './server-utils';
 
 /**
  * STRAPI_URL Sanitizer
@@ -20,14 +22,17 @@ export const R2_PUBLIC_URL = "https://pub-9ff861aa5ec14578b94dca9cd38e3f70.r2.de
  */
 export const getField = (obj: any, fieldName: string) => {
   if (!obj) return null;
-  const target = obj.data ? obj.data : obj;
-  const finalTarget = Array.isArray(target) ? target[0] : target;
-  if (!finalTarget || typeof finalTarget !== 'object') return null;
-
-  const key = Object.keys(finalTarget).find(k => k.toLowerCase() === fieldName.toLowerCase());
+  
+  // v5 often flattens data, so we check the top level, then .attributes
+  const target = obj.attributes ? obj.attributes : obj;
+  
+  // Case-insensitive key lookup
+  const key = Object.keys(target).find(k => k.toLowerCase() === fieldName.toLowerCase());
   if (!key) return null;
 
-  const value = finalTarget[key];
+  const value = target[key];
+  
+  // Handle nested .data wrapping if it exists (legacy/v4 style)
   if (value && typeof value === 'object' && value !== null && 'data' in value) {
     return value.data;
   }
@@ -74,7 +79,6 @@ export const BRANDS = {
   "gheraltatours.com": {
     id: "tours",
     name: "Gheralta Tours",
-    docId: "zvmy0su5bbhsy9li5uipyzv9",
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -91,7 +95,6 @@ export const BRANDS = {
   "gheraltaadventures.com": {
     id: "adventures",
     name: "Gheralta Adventures",
-    docId: "gas2cz781h3wylgc5s4sqm4w",
     accent: "text-[#c2410c]",
     bgAccent: "bg-[#c2410c]",
     borderAccent: "border-[#c2410c]",
@@ -108,7 +111,6 @@ export const BRANDS = {
   "abuneyemata.com": {
     id: "abuneyemata",
     name: "Abune Yemata",
-    docId: "j39unsf7fqpb8q1o0eh7w9lp",
     accent: "text-slate-900",
     bgAccent: "bg-slate-900",
     borderAccent: "border-slate-900",
@@ -124,7 +126,11 @@ export const BRANDS = {
   }
 };
 
+/**
+ * Updated getBrand to handle server-side hostname detection
+ */
 export const getBrand = (domain?: string) => {
+  // Use provided domain, or detect via window, but default to gheraltatours.com
   const activeDomain = domain || (typeof window !== "undefined" 
     ? window.location.hostname.replace("www.", "").toLowerCase() 
     : "gheraltatours.com");
@@ -144,35 +150,32 @@ export const getBrand = (domain?: string) => {
 };
 
 /**
- * CONTACT_INFO (Dynamic & Relation-Aware)
+ * CONTACT_INFO (Strapi v5 Relation Aware)
  */
 export async function getDynamicContact(domain?: string) {
-  const activeDomain = domain || (typeof window !== "undefined" 
-    ? window.location.hostname.replace("www.", "").toLowerCase() 
-    : "gheraltatours.com");
-
-  if (!STRAPI_URL || STRAPI_URL.includes('undefined')) {
-    return {
-      phone: "+251 928714272",
-      whatsapp: "https://wa.me/251928714272",
-      email: "info@gheraltatours.com",
-      address: "Hawzen, Tigray, Ethiopia",
-    };
+  // If we are on server and no domain passed, try to get it from middleware/headers
+  let activeDomain = domain;
+  if (!activeDomain && typeof window === "undefined") {
+    activeDomain = await getSiteName();
+  } else if (!activeDomain && typeof window !== "undefined") {
+    activeDomain = window.location.hostname.replace("www.", "").toLowerCase();
   }
+  
+  if (!activeDomain) activeDomain = "gheraltatours.com";
 
   try {
-    const res = await fetch(`${STRAPI_URL}/api/contact-infos?populate=domain`, { 
-      next: { revalidate: 3600 },
+    // In v5, we filter by domain name directly in the query for efficiency
+    const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$eq]=${activeDomain}&populate=*`, { 
+      next: { revalidate: 60 }, // Lower revalidate for debugging
       headers: { 'Content-Type': 'application/json' }
     });
     
-    if (!res.ok) throw new Error(`Fetch failed with status: ${res.status}`);
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
     const json = await res.json();
     
-    const myContact = json.data?.find((c: any) => {
-      const domainName = c.domain?.name; 
-      return domainName?.toLowerCase() === activeDomain.toLowerCase();
-    });
+    // v5 logic: the record we want is usually json.data[0] because of the filter
+    const rawContact = json.data?.[0];
+    const myContact = rawContact?.attributes || rawContact;
 
     if (!myContact) {
       return {
@@ -180,15 +183,18 @@ export async function getDynamicContact(domain?: string) {
         whatsapp: "https://wa.me/251928714272",
         email: activeDomain === "abuneyemata.com" ? "hello@abuneyemata.com" : "info@gheraltatours.com",
         address: "Hawzen, Tigray, Ethiopia",
+        isFallback: true
       };
     }
 
+    // Map Strapi fields (matching your PascalCase/camelCase in DB)
     return {
-      phone: myContact.Phone,
-      whatsapp: `https://wa.me/${myContact.Phone?.replace(/\D/g, '')}`,
-      email: myContact.Email,
-      address: myContact.Office_Address,
-      maps: myContact.Maps_Link
+      phone: getField(myContact, "Phone"),
+      whatsapp: `https://wa.me/${(getField(myContact, "Phone") || "").replace(/\D/g, '')}`,
+      email: getField(myContact, "Email"),
+      address: getField(myContact, "Office_Address"),
+      maps: getField(myContact, "Maps_Link"),
+      isFallback: false
     };
   } catch (error) {
     return {
@@ -196,6 +202,7 @@ export async function getDynamicContact(domain?: string) {
       whatsapp: "https://wa.me/251928714272",
       email: "info@gheraltatours.com",
       address: "Hawzen, Tigray, Ethiopia",
+      isFallback: true
     };
   }
 }
