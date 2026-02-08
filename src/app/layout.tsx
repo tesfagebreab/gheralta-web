@@ -39,13 +39,13 @@ const mono = JetBrains_Mono({
 /**
  * Helper to fetch brand-specific assets (Logo, Favicon) from Strapi v5
  */
-async function getBrandAssets(docId: string) {
+async function getBrandAssets() {
   try {
-    const res = await fetch(`${STRAPI_URL}/api/domains/${docId}?populate=*`, {
+    const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eq]=${SITE_NAME}&populate=*`, {
       next: { revalidate: 3600 }
     });
     const json = await res.json();
-    return json.data;
+    return json.data?.[0] || null;
   } catch (error) {
     console.error("Layout: Failed to fetch brand assets", error);
     return null;
@@ -54,7 +54,7 @@ async function getBrandAssets(docId: string) {
 
 export async function generateMetadata(): Promise<Metadata> {
   const brandConfig = getBrand();
-  const brandData = await getBrandAssets(brandConfig.docId);
+  const brandData = await getBrandAssets();
   
   // Navigate the Strapi v5 media object structure properly
   const faviconObj = brandData?.attributes?.favicon?.data || brandData?.favicon?.data;
