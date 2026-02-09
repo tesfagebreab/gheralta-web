@@ -1,13 +1,17 @@
 "use client";
 import Link from "next/link";
-import { useEffect } from "react";
-import {getBrand } from "@/lib/constants";
+import { useEffect, useState } from "react";
+import { getBrand } from "@/lib/constants";
 
 export default function CancelPage() {
   const brand = getBrand();
+  // State to store hostname safely after component mounts
+  const [hostname, setHostname] = useState("");
 
   useEffect(() => {
-    document.title = `Booking Cancelled | ${window.location.hostname.replace('www.', '')}`;
+    const currentHost = window.location.hostname.replace('www.', '');
+    setHostname(currentHost);
+    document.title = `Booking Cancelled | ${currentHost}`;
   }, []);
 
   return (
@@ -57,7 +61,7 @@ export default function CancelPage() {
           </Link>
           
           <button 
-            onClick={() => window.history.back()} 
+            onClick={() => typeof window !== 'undefined' && window.history.back()} 
             className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors"
           >
             ← Try Checkout Again
@@ -65,7 +69,7 @@ export default function CancelPage() {
         </div>
         
         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-          Secure Multi-Brand Architecture by {brand.name} {brand.name === 'Abune' ? 'Yemata' : window.location.hostname.replace('www.', '').includes('Tours') ? 'Tours' : 'Adventures'}
+          Secure Multi-Brand Architecture by {brand.name} {brand.name === 'Abune' ? 'Yemata' : hostname.includes('Tours') ? 'Tours' : 'Adventures'}
         </p>
       </div>
     </main>
