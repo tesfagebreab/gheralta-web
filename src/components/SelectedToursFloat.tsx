@@ -29,13 +29,13 @@ export default function SelectedToursFloat() {
   if (count === 0) return null;
 
   return (
-    /* Adjusted bottom and max-width for mobile browser safety and to avoid overlapping the chat button */
+    /* Positioned to respect mobile browser safe zones and the WhatsApp/Chat button */
     <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[100] w-full max-w-[280px] md:max-w-[320px] px-4 font-sans">
       <Link 
         href={`/checkout?tourId=${ids.join(",")}`}
         className={`
           flex items-center justify-between gap-4 
-          ${brand.colors.bgAccent} text-white p-2 pl-6 md:pl-7 rounded-full 
+          ${brand.bgAccent} text-white p-2 pl-6 md:pl-7 rounded-full 
           shadow-2xl shadow-stone-900/30 hover:scale-105 active:scale-95 
           transition-all duration-300 group
           ${isAnimating ? "animate-bounce" : ""}

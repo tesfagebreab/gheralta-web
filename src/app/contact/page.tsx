@@ -11,6 +11,7 @@ export const revalidate = 0;
 
 /**
  * Prevents "Objects are not valid as React child" for Rich Text fields
+ * Specifically tailored for Strapi v5 Blocks
  */
 const parseStrapiBlocks = (content: any): string => {
   if (!content) return "";
@@ -31,7 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const currentSite = await getSiteName();
 
   try {
-    // Standardizing the filter to ensure we get the SEO settings for the correct brand
+    // Standardizing the filter for Strapi v5 resilience
     const res = await fetch(`${STRAPI_URL}/api/contact-infos?filters[domain][name][$eqi]=${currentSite}&populate=seo.meta_image`, { 
       cache: 'no-store'
     });
@@ -41,7 +42,6 @@ export async function generateMetadata(): Promise<Metadata> {
     const json = await res.json();
     const rawData = json.data?.[0];
     
-    // Using getField helper for V5 resilience
     const seo = getField(rawData, 'seo');
     const metaImg = getField(seo, 'meta_image');
 
@@ -70,21 +70,21 @@ export default async function ContactPage({
     const resolvedParams = await searchParams;
     const initialInterest = resolvedParams?.inquiry || "";
 
-    // Fetch dynamic phone, whatsapp, address, and email using our central helper
+    // Fetch dynamic contact info (phone, whatsapp, address, email)
     const contact = await getDynamicContact(currentSite);
 
-    // Standardized input styles following your specific brand accents
-    const inputStyles = `w-full p-4 rounded-xl border border-stone-200 bg-stone-50 focus:ring-2 ${brand.id === 'abuneyemata' ? 'focus:ring-slate-900' : 'focus:ring-[#c2410c]'} focus:border-transparent outline-none transition-all font-medium text-stone-900 placeholder:text-stone-400 text-base`;
+    // Standardized input styles following brand palette
+    const inputStyles = `w-full p-4 rounded-xl border border-stone-200 bg-stone-50 focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none transition-all font-medium text-stone-900 placeholder:text-stone-400 text-base`;
 
     return (
-      <main className="bg-[#fafaf9] pt-24 md:pt-32 pb-16 md:pb-24 min-h-screen overflow-x-hidden font-sans">
+      <main className="bg-stone-50 pt-24 md:pt-32 pb-16 md:pb-24 min-h-screen overflow-x-hidden font-sans selection:bg-brand-accent/20">
           <div className="max-w-7xl mx-auto px-5 md:px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
             
             {/* Left Column: Brand Info */}
             <div className="flex flex-col justify-center">
                <h1 className="text-4xl md:text-7xl font-black italic text-stone-900 mb-6 md:mb-8 leading-[0.95] md:leading-[0.9] uppercase tracking-tighter break-words">
                  Start Your <br/>
-                 <span className={brand.accent}>Journey</span>
+                 <span className="text-brand-accent">Journey</span>
                </h1>
                <p className="text-base md:text-xl text-stone-600 mb-8 md:mb-12 max-w-md leading-relaxed font-medium break-words">
                  Whether you are ready to book an expedition or have questions about the Gheralta terrain, our local experts are here to guide you.
@@ -92,9 +92,11 @@ export default async function ContactPage({
 
                <div className="space-y-4 md:space-y-6">
                  {/* WhatsApp / Phone Card */}
-                 <div className="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-stone-100 shadow-sm hover:shadow-md transition-shadow">
+                 <div className="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-stone-100 shadow-sm hover:shadow-md transition-shadow group">
                      <h3 className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 mb-2 md:mb-3">WhatsApp / Phone</h3>
-                     <p className="text-xl md:text-2xl font-black text-stone-900 mb-2 break-all">{contact.phone || "+251 928714272"}</p>
+                     <p className="text-xl md:text-2xl font-black text-stone-900 mb-2 break-all group-hover:text-brand-accent transition-colors">
+                       {contact.phone || "+251 928714272"}
+                     </p>
                      <a 
                        href={contact.whatsapp || "#"} 
                        target="_blank" 
@@ -106,9 +108,11 @@ export default async function ContactPage({
                  </div>
                  
                  {/* Direct Email Card */}
-                 <div className="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-stone-100 shadow-sm hover:shadow-md transition-shadow">
+                 <div className="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-stone-100 shadow-sm hover:shadow-md transition-shadow group">
                      <h3 className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 mb-2 md:mb-3">Direct Email</h3>
-                     <p className="text-xl md:text-2xl font-black text-stone-900 mb-1 break-all">{contact.email || brand.email}</p>
+                     <p className="text-xl md:text-2xl font-black text-stone-900 mb-1 break-all group-hover:text-brand-accent transition-colors">
+                       {contact.email || brand.email}
+                     </p>
                      <p className="text-[9px] md:text-[10px] font-bold text-stone-400 uppercase tracking-widest">Official {brand.name} Inbox</p>
                  </div>
 
@@ -127,7 +131,7 @@ export default async function ContactPage({
             <div className="bg-white rounded-[2rem] md:rounded-[4rem] p-6 md:p-12 shadow-2xl shadow-stone-200 border border-stone-50 h-fit">
                <div className="mb-8 md:mb-10">
                   <h2 className="text-2xl md:text-3xl font-black italic text-stone-900 uppercase tracking-tighter">Send Inquiry</h2>
-                  <div className={`h-1.5 w-12 ${brand.bgAccent} mt-2`}></div>
+                  <div className="h-1.5 w-12 bg-brand-accent mt-2"></div>
                </div>
                
                <ContactForm 
@@ -148,8 +152,8 @@ export default async function ContactPage({
   } catch (error) {
     console.error("CONTACT PAGE RENDER ERROR:", error);
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center p-10 bg-[#fafaf9]">
-        <h1 className="text-2xl font-black uppercase italic text-red-500 tracking-tighter">Connection Error</h1>
+      <div className="min-h-screen flex flex-col items-center justify-center text-center p-10 bg-stone-50">
+        <h1 className="text-2xl font-black uppercase italic text-brand-accent tracking-tighter">Connection Error</h1>
         <p className="text-stone-400 text-[9px] md:text-[10px] font-bold uppercase tracking-widest mt-2">Checking Connection for {currentSite}...</p>
         <Link href="/" className="mt-8 text-[9px] md:text-[10px] font-black uppercase tracking-widest border-b-2 border-stone-200 pb-1 text-stone-900">Return Home</Link>
       </div>

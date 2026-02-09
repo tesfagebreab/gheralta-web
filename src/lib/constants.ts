@@ -1,5 +1,5 @@
 // src/lib/constants.ts
-// RAILPACK CACHE BUST - 2026-02-08 FINAL
+// RAILPACK CACHE BUST - 2026-02-09 - MULTI-BRAND OPTIMIZED
 
 /**
  * STRAPI_URL Sanitizer
@@ -69,15 +69,16 @@ export const getBrandLogo = (media: any) => getStrapiMedia(media, 'small');
 
 /**
  * BRAND ATTRIBUTES
+ * Each brand now maps to the CSS Variables defined in globals.css
  */
 export const BRANDS = {
   "gheraltatours.com": {
     id: "tours",
     name: "Gheralta Tours",
-    accent: "text-[#c2410c]",
-    bgAccent: "bg-[#c2410c]",
-    borderAccent: "border-[#c2410c]",
-    buttonHover: "hover:bg-[#9a3412]",
+    accent: "text-brand-accent", 
+    bgAccent: "bg-brand-accent",
+    borderAccent: "border-brand-accent",
+    buttonHover: "hover:bg-brand-hover",
     description: "Expert-led cultural and historical journeys.",
     email: "info@gheraltatours.com",
     nav: [
@@ -90,36 +91,36 @@ export const BRANDS = {
   "gheraltaadventures.com": {
     id: "adventures",
     name: "Gheralta Adventures",
-    accent: "text-[#c2410c]",
-    bgAccent: "bg-[#c2410c]",
-    borderAccent: "border-[#c2410c]",
-    buttonHover: "hover:bg-[#9a3412]",
+    accent: "text-brand-accent",
+    bgAccent: "bg-brand-accent",
+    borderAccent: "border-brand-accent",
+    buttonHover: "hover:bg-brand-hover",
     description: "High-octane rock climbing and trekking.",
     email: "bookings@gheraltaadventures.com",
     nav: [
-      { label: "TOURS", href: "/tours" },
-      { label: "OUR STORY", href: "/about-us" },
-      { label: "OUR THINKING", href: "/blog" },
+      { label: "ADVENTURES", href: "/tours" },
+      { label: "ABOUT US", href: "/about-us" },
+      { label: "OUR JOURNAL", href: "/blog" },
       { label: "CONTACT", href: "/contact" }
     ]
   },
   "abuneyemata.com": {
     id: "abuneyemata",
     name: "Abune Yemata",
-    accent: "text-slate-900",
-    bgAccent: "bg-slate-900",
-    borderAccent: "border-slate-900",
-    buttonHover: "hover:bg-slate-800",
-    description: "Pilgrimages and spiritual journeys.",
+    accent: "text-brand-accent",
+    bgAccent: "bg-brand-accent",
+    bgAccentHover: "bg-brand-hover",
+    borderAccent: "border-brand-accent",
+    description: "Sacred treks and spiritual discovery in the sky-churches.",
     email: "hello@abuneyemata.com",
     nav: [
-      { label: "TOURS", href: "/tours" },
-      { label: "OUR STORY", href: "/about-us" },
-      { label: "OUR THINKING", href: "/blog" },
+      { label: "PILGRIMAGES", href: "/tours" },
+      { label: "THE STORY", href: "/about-us" },
+      { label: "THE DIARY", href: "/blog" },
       { label: "CONTACT", href: "/contact" }
     ]
   }
-};
+};   
 
 /**
  * BRAND GETTER (Universal Logic)
@@ -128,27 +129,24 @@ export const getBrand = (domain?: string) => {
   let activeDomain = "gheraltatours.com";
 
   if (domain) {
-    // 1. Explicit domain passed from Server Component
     activeDomain = domain;
   } else if (typeof window !== "undefined") {
-    // 2. Client-side detection
     activeDomain = window.location.hostname;
   }
 
-  // Clean the domain (remove www. and port numbers)
   activeDomain = activeDomain.replace("www.", "").split(":")[0].toLowerCase();
-
-  // Find a match based on partial string (handles railway app urls temporarily if needed)
   const match = Object.keys(BRANDS).find(key => activeDomain.includes(key)) || "gheraltatours.com";
   const brand = BRANDS[match as keyof typeof BRANDS];
   
+  // Cleaned up colors to ensure they always point to the CSS variables
+  // and removed the hardcoded dark colors for Abune Yemata.
   return {
     ...brand,
     colors: {
-      primary: brand.id === 'abuneyemata' ? "#0f172a" : "#c2410c",
-      accent: brand.accent,
-      bgAccent: brand.bgAccent,
-      hover: brand.id === 'abuneyemata' ? "#1e293b" : "#9a3412"
+      primary: "var(--brand-accent)",
+      accent: "var(--brand-accent)",
+      bgAccent: "var(--brand-selection)", // Used for the subtle footer glow
+      hover: "var(--brand-accent-hover)"
     }
   };
 };
@@ -158,7 +156,7 @@ export const getBrand = (domain?: string) => {
  */
 export async function getDynamicContact(domain?: string) {
   const brandData = getBrand(domain);
-  const activeDomain = brandData.email.split('@')[1]; // Derived from brand data fallback
+  const activeDomain = brandData.email.split('@')[1];
 
   try {
     const res = await fetch(`${STRAPI_URL}/api/contact-infos?populate=domain`, { 
@@ -178,15 +176,17 @@ export async function getDynamicContact(domain?: string) {
     if (!myContact) {
       return {
         phone: "+251 928714272",
-        whatsapp: "https://wa.me/251928714272",
+        whatsapp: "251928714272", // Raw number for wa.me links
         email: brandData.email,
         address: "Hawzen, Tigray, Ethiopia",
       };
     }
 
+    const rawPhone = (myContact.Phone || myContact.phone || "251928714272");
+
     return {
-      phone: myContact.Phone || myContact.phone,
-      whatsapp: `https://wa.me/${(myContact.Phone || myContact.phone || "251928714272").replace(/\D/g, '')}`,
+      phone: rawPhone,
+      whatsapp: rawPhone.replace(/\D/g, ''),
       email: myContact.Email || myContact.email,
       address: myContact.Office_Address || myContact.office_address,
       maps: myContact.Maps_Link || myContact.maps_link
@@ -195,7 +195,7 @@ export async function getDynamicContact(domain?: string) {
     console.error("Critical Contact Fetch Error:", error);
     return {
       phone: "+251 928714272",
-      whatsapp: "https://wa.me/251928714272",
+      whatsapp: "251928714272",
       email: brandData.email,
       address: "Hawzen, Tigray, Ethiopia",
     };

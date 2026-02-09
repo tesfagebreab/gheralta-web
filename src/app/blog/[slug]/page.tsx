@@ -20,7 +20,7 @@ interface Props {
 }
 
 // --- IMPROVED MANUAL BLOCK RENDERER ---
-const RenderBlocks = ({ content, accentColor }: { content: any[], accentColor: string }) => {
+const RenderBlocks = ({ content }: { content: any[] }) => {
   if (!content || !Array.isArray(content)) return null;
 
   return content.map((block: any, index: number) => {
@@ -40,7 +40,7 @@ const RenderBlocks = ({ content, accentColor }: { content: any[], accentColor: s
         const Tag = `h${block.level || 2}` as keyof React.JSX.IntrinsicElements;
         const sizeClass = block.level === 1 ? "text-3xl md:text-5xl" : "text-2xl md:text-3xl";
         return (
-          <Tag key={index} className={`font-black uppercase italic tracking-tighter mt-12 mb-6 ${accentColor} ${sizeClass} leading-tight`}>
+          <Tag key={index} className={`font-black uppercase italic tracking-tighter mt-12 mb-6 text-brand-accent ${sizeClass} leading-tight`}>
             {block.children?.map((child: any) => child.text).join("")}
           </Tag>
         );
@@ -80,16 +80,17 @@ const RenderBlocks = ({ content, accentColor }: { content: any[], accentColor: s
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const currentSite = await getSiteName(); // safe in server component
+  const currentSite = await getSiteName();
 
   try {
     const res = await fetch(`${STRAPI_URL}/api/posts?filters[slug][$eq]=${slug}&populate=*`);
     const json = await res.json();
     const post = json.data?.[0];
-    const title = post?.title || post?.attributes?.title || slug;
+    const title = getField(post, 'title') || slug;
+    
     return { 
       title: `${title} | Journal | ${currentSite}`,
-      description: post?.excerpt || post?.attributes?.excerpt
+      description: getField(post, 'excerpt')
     };
   } catch {
     return { title: `Journal | ${currentSite}` };
@@ -99,7 +100,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
   const brand = getBrand();
-  const currentSite = await getSiteName(); // safe in server component
+  const currentSite = await getSiteName();
 
   const fetchUrl = `${STRAPI_URL}/api/posts?filters[slug][$eq]=${slug}&populate=*`;
   const res = await fetch(fetchUrl, { cache: 'no-store' });
@@ -108,14 +109,14 @@ export default async function BlogPostPage({ params }: Props) {
 
   if (!post) notFound();
 
-  const title = post.title || post.attributes?.title || "Untitled Post";
-  const content = post.content || post.attributes?.content;
-  const excerpt = post.excerpt || post.attributes?.excerpt;
-  const rawImage = post.featured_image || post.attributes?.featured_image;
+  const title = String(getField(post, "title") || "Untitled Post");
+  const content = getField(post, "content");
+  const excerpt = getField(post, "excerpt");
+  const rawImage = getField(post, "featured_image");
   const heroImg = Array.isArray(rawImage) ? rawImage[0] : rawImage;
 
   return (
-    <main className="bg-[#fafaf9] min-h-screen pb-24 font-sans overflow-x-hidden">
+    <main className="bg-stone-50 min-h-screen pb-24 font-sans selection:bg-brand-accent/20 overflow-x-hidden">
       {/* HEADER SECTION */}
       <header className="pt-32 pb-12 px-6">
         <div className="max-w-5xl mx-auto">
@@ -128,7 +129,7 @@ export default async function BlogPostPage({ params }: Props) {
           
           <h1 className="text-4xl md:text-6xl font-black italic text-stone-900 uppercase tracking-tighter leading-tight mb-8">
             {title.split(' ').map((word: string, i: number) => (
-              <span key={i} className={i % 3 === 1 ? brand.accent : ""}>
+              <span key={i} className={i % 3 === 1 ? "text-brand-accent" : ""}>
                 {word}{' '}
               </span>
             ))}
@@ -162,9 +163,9 @@ export default async function BlogPostPage({ params }: Props) {
       {/* CONTENT AREA */}
       <div className="max-w-4xl mx-auto px-6">
         <article className="relative">
-          <div className="prose prose-stone max-w-none">
+          <div className="prose-gheralta max-w-none">
             {content ? (
-              <RenderBlocks content={content} accentColor={brand.accent} />
+              <RenderBlocks content={content} />
             ) : (
               <div className="py-20 text-center border-2 border-dashed border-stone-200 rounded-[3rem]">
                 <p className="italic text-stone-400 font-serif">The transcription for this dispatch is currently unavailable.</p>
@@ -183,7 +184,7 @@ export default async function BlogPostPage({ params }: Props) {
             
             <Link 
                 href="/contact"
-                className={`${brand.bgAccent} text-white px-10 py-5 rounded-full text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-xl hover:scale-105 hover:brightness-110 active:scale-95`}
+                className="bg-brand-accent hover:bg-brand-hover text-white px-10 py-5 rounded-full text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-xl hover:scale-105 active:scale-95"
             >
               Book This Experience
             </Link>

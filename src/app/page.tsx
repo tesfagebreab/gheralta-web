@@ -26,7 +26,6 @@ const parseStrapiBlocks = (content: any): string => {
 };
 
 export async function generateMetadata(): Promise <Metadata> {
-  const brand = getBrand();
   const currentSite = await getSiteName();
 
   try {
@@ -37,7 +36,6 @@ export async function generateMetadata(): Promise <Metadata> {
     }
   
     const json = await res.json();
-    // Strapi v5 Compatibility: check attributes, fallback to direct object
     const rawData = json.data?.[0];
     const homeData = rawData?.attributes || rawData || {};
     
@@ -65,7 +63,6 @@ export default async function Home() {
     let homeData = {};
     if (homeRes.ok) {
       const homeJson = await homeRes.json();
-      // Strapi v5 Compatibility: check attributes, fallback to direct object
       const rawHome = homeJson.data?.[0];
       homeData = rawHome?.attributes || rawHome || {};
     } else {
@@ -76,14 +73,13 @@ export default async function Home() {
     const allTours = tourJson.data || [];
 
     // --- Extract Fields ---
-    const heroTitle = getField(homeData, "Hero_Title");
+    const heroTitle = String(getField(homeData, "Hero_Title") || "");
     const heroSubtitle = getField(homeData, "Hero_Subtitle");
     const heroImageRaw = getField(homeData, "hero_image");
-    const partnerLogos = getField(homeData, "Partner_Logos");
     const founderMsg = getField(homeData, "Founder_Philosophy");
     
     const featuredImgUrl = getStrapiMedia(heroImageRaw, 'large');
-    const trustBannerData = getField(homeData, "TrustBanner") || (homeData as any).TrustBanner;
+    const trustBannerData = getField(homeData, "TrustBanner");
 
     const interestTypes = getField(homeData, "featured_types") || [];
     const strapiFeaturedTours = getField(homeData, "featured_tours");
@@ -92,9 +88,9 @@ export default async function Home() {
     const displayTours = hasFeatured ? strapiFeaturedTours : allTours;
 
     return (
-      <main className="min-h-screen bg-slate-50 font-sans overflow-x-hidden">
+      <main className="min-h-screen bg-stone-50 font-sans overflow-x-hidden">
         {/* HERO SECTION */}
-        <section className="relative w-full h-[75vh] flex items-start justify-center pt-16 md:pt-20 overflow-hidden bg-slate-900">
+        <section className="relative w-full h-[75vh] flex items-start justify-center pt-16 md:pt-20 overflow-hidden bg-stone-900">
            {featuredImgUrl && (
              <Image
                src={featuredImgUrl}
@@ -107,7 +103,7 @@ export default async function Home() {
            )}
            <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
               <h1 className="text-4xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter uppercase italic leading-[0.9] drop-shadow-lg break-words">
-                {heroTitle}<span className={brand.accent}>.</span>
+                {heroTitle}<span className="text-brand-accent">.</span>
               </h1>
               <p className="text-white/90 mt-6 font-medium leading-relaxed max-w-2xl mx-auto text-lg md:text-xl drop-shadow-md break-words">
                 {heroSubtitle}
@@ -121,13 +117,12 @@ export default async function Home() {
           {interestTypes.length > 0 && (
             <section className="mb-24 mt-12">
               <div className="mb-10">
-                 <h3 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight italic uppercase leading-tight break-words">
-                    Our Tours<span className={brand.accent}>.</span>
+                 <h3 className="text-3xl md:text-4xl font-black text-stone-900 tracking-tight italic uppercase leading-tight break-words">
+                    Our Tours<span className="text-brand-accent">.</span>
                  </h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {interestTypes.map((type: any) => {
-                  // V5: types might be flattened or nested
                   const typeData = type.attributes || type;
                   const typeImg = getField(typeData, 'Featured_Image');
                   const resolvedImg = getStrapiMedia(typeImg, 'medium');
@@ -137,7 +132,7 @@ export default async function Home() {
                     <Link
                       key={type.id}
                       href={`/tours?type=${slug}`}
-                      className="group relative h-96 rounded-3xl overflow-hidden bg-slate-900 shadow-md"
+                      className="group relative h-96 rounded-3xl overflow-hidden bg-stone-900 shadow-md"
                     >
                         {resolvedImg && (
                           <Image
@@ -163,10 +158,10 @@ export default async function Home() {
           {/* FEATURED TOURS */}
           <section className="mb-24">
               <div className="flex flex-col md:flex-row justify-between items-baseline mb-10 gap-4">
-                 <h3 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight italic leading-tight break-words">
-                    Selected Expeditions<span className={brand.accent}>.</span>
+                 <h3 className="text-3xl md:text-4xl font-black text-stone-900 tracking-tight italic leading-tight break-words">
+                    Selected Expeditions<span className="text-brand-accent">.</span>
                  </h3>
-                 <Link href="/tours" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">
+                 <Link href="/tours" className="text-xs font-bold uppercase tracking-widest text-stone-400 hover:text-brand-accent transition-colors">
                     View All &rarr;
                  </Link>
               </div>
@@ -195,8 +190,8 @@ export default async function Home() {
                  const startingPrice = priceArray.length > 0 ? Math.min(...priceArray) : null;
 
                  return (
-                   <div key={tour.id || slug} className="group bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100 flex flex-col h-full hover:shadow-xl transition-all">
-                     <div className="relative h-96 w-full bg-slate-200 overflow-hidden">
+                   <div key={tour.id || slug} className="group bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-stone-100 flex flex-col h-full hover:shadow-xl transition-all">
+                     <div className="relative h-96 w-full bg-stone-200 overflow-hidden">
                        {resolvedTourImg ? (
                          <Image
                            src={resolvedTourImg}
@@ -206,22 +201,23 @@ export default async function Home() {
                            unoptimized
                          />
                        ) : (
-                         <div className="h-full flex items-center justify-center text-slate-300 text-[10px] font-black uppercase">No Image</div>
+                         <div className="h-full flex items-center justify-center text-stone-300 text-[10px] font-black uppercase">No Image</div>
                        )}
                      </div>
                      <div className="p-8 flex flex-col flex-grow">
-                       <h2 className="text-2xl font-black text-slate-900 leading-tight mb-4 uppercase italic break-words">
+                       <h2 className="text-2xl font-black text-stone-900 leading-tight mb-4 uppercase italic break-words">
                          {title}
                        </h2>
-                       <div className="text-slate-500 text-sm leading-relaxed mb-8 line-clamp-3 font-medium break-words">
+                       {/* Applied prose-gheralta class below */}
+                       <div className="prose-gheralta text-stone-500 text-sm leading-relaxed mb-8 line-clamp-3 font-medium break-words">
                          {parseStrapiBlocks(description)}
                        </div>
-                       <div className="mt-auto pt-6 border-t border-slate-100 flex justify-between items-center">
-                         <p className="text-xl font-black text-slate-900 uppercase">
-                           {startingPrice ? `$${startingPrice}` : <span className="text-xs italic font-medium text-slate-400">Price upon request</span>}
+                       <div className="mt-auto pt-6 border-t border-stone-100 flex justify-between items-center">
+                         <p className="text-xl font-black text-stone-900 uppercase">
+                           {startingPrice ? `$${startingPrice}` : <span className="text-xs italic font-medium text-stone-400">Price upon request</span>}
                          </p>
                          <Link href={`/tours/${slug || '#'}`}>
-                           <span className={`inline-flex items-center justify-center ${brand.bgAccent} text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px]`}>
+                           <span className="inline-flex items-center justify-center bg-brand-accent text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-brand-hover transition-colors shadow-lg">
                              Explore
                            </span>
                          </Link>
@@ -233,34 +229,34 @@ export default async function Home() {
               </div>
           </section>
 
-          {/* WHY US SECTION */}
+          {/* WHY US / TRUST BANNER SECTION */}
           {trustBannerData && (
-            <section className="mb-24 py-16 border-y border-slate-200">
+            <section className="mb-24 py-16 border-y border-stone-200">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
                 <div className="md:col-span-1">
-                   <h3 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-slate-200 italic leading-none break-words">
+                   <h3 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-stone-200 italic leading-none break-words">
                       Why Us
                    </h3>
                 </div>
 
-                <div className="md:col-span-3 border-l-4 border-slate-200 pl-8">
-                  <h2 className="text-2xl md:text-4xl font-black uppercase italic text-slate-900 mb-6 leading-tight break-words">
+                <div className="md:col-span-3 border-l-4 border-brand-accent/30 pl-8">
+                  <h2 className="text-2xl md:text-4xl font-black uppercase italic text-stone-900 mb-6 leading-tight break-words">
                     {getField(trustBannerData, "headline")}
                   </h2>
                   
-                  <div className="text-slate-600 font-medium leading-relaxed text-lg md:text-xl mb-12 break-words">
+                  <div className="text-stone-600 font-medium leading-relaxed text-lg md:text-xl mb-12 break-words">
                     {getField(trustBannerData, "subheadline")}
                   </div>
 
-                  <div className="mt-8 border-t border-slate-100 pt-8">
-                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6">A Decade of Trust</p>
+                  <div className="mt-8 border-t border-stone-100 pt-8">
+                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 mb-6">A Decade of Trust</p>
                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-50">
-                           <p className="text-2xl font-black text-slate-900 leading-none">{getField(trustBannerData, "years_experience")}+</p>
+                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-50">
+                           <p className="text-2xl font-black text-stone-900 leading-none">{getField(trustBannerData, "years_experience")}+</p>
                            <p className="text-[9px] font-bold uppercase text-slate-400 mt-1">Years Experience</p>
                         </div>
-                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-50">
-                           <p className="text-2xl font-black text-slate-900 leading-none">{getField(trustBannerData, "client_count_label") || '100%'}</p>
+                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-50">
+                           <p className="text-2xl font-black text-stone-900 leading-none">{getField(trustBannerData, "client_count_label") || '100%'}</p>
                            <p className="text-[9px] font-bold uppercase text-slate-400 mt-1">Local Expertise</p>
                         </div>
                      </div>
@@ -272,7 +268,7 @@ export default async function Home() {
 
           {/* TRUST BADGES SECTION */}
           {getField(trustBannerData, "trust_badges") && (
-            <section className="mb-24 py-20 bg-stone-50 rounded-[4rem] text-center border border-stone-100 overflow-hidden">
+            <section className="mb-24 py-20 bg-stone-100 rounded-[4rem] text-center border border-stone-200/50 overflow-hidden">
                 <p className="text-[12px] font-black uppercase tracking-[0.3em] text-stone-500 mb-12 px-6">DELIVERING 5-STAR RATED SERVICE FOR 10 YEARS IN A ROW</p>
                 <div className="flex flex-wrap justify-center items-center gap-16 px-10">
                   {getField(trustBannerData, "trust_badges").map((badge: any) => {
@@ -295,33 +291,44 @@ export default async function Home() {
             </section>
           )}
 
-          {/* FOUNDER PHILOSOPHY */}
-          {getField(trustBannerData, "founder_image") && (
-            <section className="mb-24 flex flex-col md:flex-row items-center gap-8 bg-slate-900 text-white p-10 rounded-[3rem] shadow-2xl">
-              <div className="relative h-32 w-32 md:h-40 md:w-40 shrink-0 rounded-full overflow-hidden border-4 border-white/20">
-                <Image
-                  src={getStrapiMedia(getField(trustBannerData, "founder_image"))}
-                  alt="Founder"
-                  fill
-                  className="object-cover"
-                  unoptimized
-                />
-              </div>
-              <div>
-                <p className="text-xl md:text-3xl font-serif italic text-white/90 leading-tight break-words">
-                  "{founderMsg}"
-                </p>
-                <p className="mt-4 text-xs font-black uppercase tracking-widest text-slate-400">— Founder</p>
-              </div>
-            </section>
-          )}
+{/* FOUNDER PHILOSOPHY */}
+{getField(trustBannerData, "founder_image") && (
+  <section className="mb-24 flex flex-col md:flex-row items-center gap-8 bg-stone-100 p-10 rounded-[3rem] border border-stone-200">
+    <div className="relative h-32 w-32 md:h-40 md:w-40 shrink-0 rounded-full overflow-hidden border-4 border-white shadow-md">
+      <Image
+        src={getStrapiMedia(getField(trustBannerData, "founder_image"))}
+        alt="Founder"
+        fill
+        className="object-cover"
+        unoptimized
+      />
+    </div>
+    <div className="prose-gheralta max-w-none flex-1">
+      {/* !bg-none: removes the diagonal lines texture 
+          !bg-transparent: lets the section's stone-100 show through
+          !p-0 !m-0: prevents double-padding issues
+      */}
+      <blockquote className="!bg-none !bg-transparent !border-none !p-0 !m-0 !shadow-none !text-stone-800">
+        <p className="text-xl md:text-3xl font-serif italic leading-tight break-words">
+          "{founderMsg || getField(trustBannerData, "subheadline")}"
+        </p>
+        <footer className="mt-4 not-italic">
+          <div className="flex items-center gap-3">
+            <div className="h-px w-6 bg-brand-accent"></div>
+            <span className="text-xs font-black uppercase tracking-widest text-brand-accent">Founder</span>
+          </div>
+        </footer>
+      </blockquote>
+    </div>
+  </section>
+)}
 
           {/* PARTNER LOGOS */}
-          {(getField(trustBannerData, 'partner_logos') || partnerLogos) && (
+          {getField(trustBannerData, 'partner_logos') && (
              <section className="mb-24 py-20 border-t border-stone-200 text-center">
                 <p className="text-[12px] font-black uppercase tracking-[0.5em] text-stone-500 mb-12">PIONEER PARTNER FOR MAJOR GLOBAL PLATFORMS</p>
                 <div className="flex flex-wrap justify-center items-center gap-16 md:gap-24 opacity-40 hover:opacity-100 grayscale hover:grayscale-0 transition-all duration-700">
-                   {(getField(trustBannerData, 'partner_logos') || partnerLogos).map((logo: any) => {
+                   {getField(trustBannerData, 'partner_logos').map((logo: any) => {
                      const resolvedPartnerImg = getStrapiMedia(logo, 'thumbnail');
                      return (
                        <div key={logo.id} className="relative h-24 w-56 hover:scale-105 transition-transform">
@@ -346,8 +353,9 @@ export default async function Home() {
   } catch (error) {
     console.error("Home Page Fetch Error:", error);
     return (
-      <div className="p-20 text-center">
-        <h1 className="text-xl font-black text-slate-400">System Connection Offline</h1>
+      <div className="p-20 text-center bg-stone-50 min-h-screen flex flex-col items-center justify-center">
+        <h1 className="text-xl font-black text-stone-400 uppercase italic tracking-tighter">System Connection Offline</h1>
+        <Link href="/contact" className="mt-4 text-brand-accent font-bold uppercase text-[10px] tracking-widest border-b border-brand-accent">Reach us via WhatsApp</Link>
       </div>
     );
   }

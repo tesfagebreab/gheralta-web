@@ -13,7 +13,10 @@ export default function SuccessPage() {
     
     // Optional: Scroll to top on success
     window.scrollTo(0, 0);
-  }, []);
+
+    // Set page title dynamically
+    document.title = `Booking Confirmed | ${brand.name}`;
+  }, [brand.name]);
 
   return (
     <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center font-sans">

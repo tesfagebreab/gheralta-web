@@ -7,8 +7,10 @@ import { STRAPI_URL, getBrand, getStrapiMedia, getDynamicContact, getField } fro
 import { useState, useEffect } from 'react';
 
 export default function Navbar() {
+  // 1. Initial brand detection based on current domain
   const brand = getBrand();
   const pathname = usePathname();
+  
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); 
   const [whatsappLink, setWhatsappLink] = useState(`https://wa.me/251928714272`);
@@ -20,14 +22,19 @@ export default function Navbar() {
     
     async function fetchData() {
       try {
-        // 1. Fetch Dynamic Contact Info using our fixed helper
+        // Fetch Dynamic Contact Info
         const contactData = await getDynamicContact();
         if (contactData && contactData.whatsapp) {
           setWhatsappLink(contactData.whatsapp);
         }
 
-        // 2. Fetch Domain Specific Assets (Logo)
-        const currentHost = window.location.hostname.replace('www.', '').toLowerCase();
+        // Fetch Domain Specific Assets (Logo)
+        // Sanitizing both .com and .local for development consistency
+        const currentHost = window.location.hostname
+          .replace('www.', '')
+          .replace('.local', '.com') 
+          .toLowerCase();
+
         const res = await fetch(`${STRAPI_URL}/api/domains?populate=*`, { 
           next: { revalidate: 3600 } 
         });
@@ -51,6 +58,7 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Prevent background scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -89,7 +97,7 @@ export default function Navbar() {
               </div>
             ) : (
               <div className={`h-12 w-12 md:h-20 md:w-20 rounded-full border-4 flex-shrink-0 flex items-center justify-center font-serif italic font-black text-xl md:text-4xl transition-all shadow-lg ${
-                scrolled ? 'border-stone-200 bg-white text-[#c2410c]' : 'border-white/60 text-white'
+                scrolled ? 'border-stone-200 bg-white text-brand-accent' : 'border-white/60 text-white'
               }`}>
                 {brand.name.charAt(0)}
               </div>
@@ -100,7 +108,7 @@ export default function Navbar() {
                 scrolled ? 'text-stone-900' : 'text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]'
               }`}>
                 {brand.name.split(' ')[0]} 
-                <span className={`${brand.colors.accent} ml-1 block sm:inline`}>
+                <span className={`text-brand-accent ml-1 block sm:inline`}>
                   {brand.name.split(' ').slice(1).join(' ')}
                 </span>
               </span>
@@ -117,13 +125,13 @@ export default function Navbar() {
                   href={item.href}
                   className={`relative text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 py-2 ${
                     scrolled 
-                      ? (isActive ? 'text-[#c2410c]' : 'text-stone-500 hover:text-stone-900')
+                      ? (isActive ? 'text-brand-accent' : 'text-stone-500 hover:text-stone-900')
                       : (isActive ? 'text-white' : 'text-white/60 hover:text-white')
                   }`}
                 >
                   {item.label}
                   {isActive && (
-                    <span className={`absolute bottom-0 left-0 w-full h-0.5 transition-all ${scrolled ? 'bg-[#c2410c]' : 'bg-white'}`} />
+                    <span className={`absolute bottom-0 left-0 w-full h-0.5 transition-all ${scrolled ? 'bg-brand-accent' : 'bg-white'}`} />
                   )}
                 </Link>
               );
@@ -142,7 +150,7 @@ export default function Navbar() {
             
             <Link 
               href="/contact" 
-              className={`px-4 py-2 md:px-6 md:py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0 ${brand.colors.bgAccent} text-white`}
+              className={`px-4 py-2 md:px-6 md:py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0 bg-brand-accent hover:bg-brand-hover text-white`}
             >
               Inquiry
             </Link>
@@ -182,7 +190,7 @@ export default function Navbar() {
               }`}
               style={{ transitionDelay: `${idx * 60}ms` }}
             >
-              <span className={pathname === item.href ? brand.colors.accent : 'text-stone-300'}>
+              <span className={pathname === item.href ? 'text-brand-accent' : 'text-stone-300'}>
                 {item.label}
               </span>
             </Link>

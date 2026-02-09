@@ -55,7 +55,7 @@ function CheckoutContent() {
       }
       try {
         const ids = tourIdParam.split(',').filter(Boolean);
-        // Strapi v5 filtering logic
+        // Strapi v5 filtering logic - documentId based
         const filters = ids.map((id, index) => `filters[documentId][$in][${index}]=${id}`).join('&');
         const query = `${STRAPI_URL}/api/tours?${filters}&populate=*`;
         
@@ -120,8 +120,9 @@ function CheckoutContent() {
     if (!formData.phone.trim()) newErrors.phone = "Required";
     if (!formData.agreedToTerms) newErrors.agreedToTerms = "Accept policies";
     if (tours.some(t => !t.selectedDate)) newErrors.dates = "Select dates for all tours";
+    
     setErrors(newErrors);
-    // ADD THIS: Feedback for the user
+    
     if (Object.keys(newErrors).length > 0) {
       alert("Please complete all required fields and accept the Booking Terms to proceed to payment.");
     }
@@ -170,6 +171,7 @@ function CheckoutContent() {
         <main className="max-w-6xl mx-auto px-6 py-8">
           <div className="flex flex-col lg:flex-row gap-8">
             
+            {/* Left Column: Tour List */}
             <div className="lg:w-7/12 space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-black italic uppercase tracking-tight text-stone-800">
@@ -264,6 +266,7 @@ function CheckoutContent() {
               </div>
             </div>
 
+            {/* Right Column: Form and Payment */}
             <aside className="lg:w-5/12">
               <div className="bg-white rounded-3xl p-8 border border-stone-200 shadow-sm sticky top-28">
                 <h2 className="text-lg font-black mb-6 italic uppercase tracking-tight text-stone-800">Lead Traveler Details</h2>
@@ -284,24 +287,24 @@ function CheckoutContent() {
 
                   <div className="pt-6 border-t border-stone-50">
                     <label className="flex items-start gap-3 cursor-pointer mb-6 group">
-  <input 
-    type="checkbox" 
-    checked={formData.agreedToTerms} 
-    onChange={(e) => setFormData({...formData, agreedToTerms: e.target.checked})} 
-    className="mt-1 w-4 h-4 rounded border-stone-300 accent-[#c2410c] cursor-pointer" 
-  />
-  <p className="text-[10px] font-bold text-stone-500 uppercase leading-relaxed italic">
-    I accept the {' '}
-    <Link 
-      href="/booking-terms" 
-      target="_blank" 
-      rel="noopener noreferrer"
-      className="text-[#c2410c] underline decoration-stone-300 underline-offset-2 hover:text-[#9a3412] transition-colors"
-    >
-      Booking Terms and Conditions
-    </Link>.
-  </p>
-</label>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.agreedToTerms} 
+                        onChange={(e) => setFormData({...formData, agreedToTerms: e.target.checked})} 
+                        className="mt-1 w-4 h-4 rounded border-stone-300 accent-[#c2410c] cursor-pointer" 
+                      />
+                      <p className="text-[10px] font-bold text-stone-500 uppercase leading-relaxed italic">
+                        I accept the {' '}
+                        <Link 
+                          href="/booking-terms" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-[#c2410c] underline decoration-stone-300 underline-offset-2 hover:text-[#9a3412] transition-colors"
+                        >
+                          Booking Terms and Conditions
+                        </Link>.
+                      </p>
+                    </label>
 
                     <div className="relative z-10">
                       {(!formData.agreedToTerms || !formData.fullName || tours.some(t => !t.selectedDate)) ? (
@@ -324,6 +327,7 @@ function CheckoutContent() {
                             if (actions.order) {
                               const details = await actions.order.capture();
                               
+                              // Create booking in Strapi
                               await fetch(`${STRAPI_URL}/api/bookings`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -346,6 +350,7 @@ function CheckoutContent() {
                                 })
                               });
 
+                              // Send confirmation email
                               await fetch('/api/emails', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },

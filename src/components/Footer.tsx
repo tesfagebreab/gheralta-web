@@ -79,13 +79,13 @@ export default async function Footer() {
                 />
               </div>
             ) : (
-              <div className={`h-14 w-14 md:h-16 md:w-16 rounded-full border border-stone-800 flex items-center justify-center font-black italic ${brand.colors.accent} text-xl`}>
+              <div className="h-14 w-14 md:h-16 md:w-16 rounded-full border border-stone-800 flex items-center justify-center font-black italic text-brand-accent text-xl">
                 {brand.name.charAt(0)}
               </div>
             )}
             <h2 className="text-2xl md:text-3xl font-sans font-black italic uppercase tracking-tighter mt-2 md:mt-0">
                {brand.name.split(' ')[0]} 
-               <span className={brand.colors.accent}> {brand.name.split(' ').slice(1).join(' ')}</span>
+               <span className="text-brand-accent"> {brand.name.split(' ').slice(1).join(' ')}</span>
             </h2>
           </div>
           <p className="text-stone-400 text-sm leading-relaxed max-w-sm font-medium">
@@ -102,14 +102,14 @@ export default async function Footer() {
               <li key={link.href}>
                 <Link 
                   href={link.href} 
-                  className={`text-sm font-bold transition-colors hover:${brand.colors.accent} text-stone-300`}
+                  className="text-sm font-bold transition-colors hover:text-brand-accent text-stone-300"
                 >
                   {link.label}
                 </Link>
               </li>
             ))}
             <li>
-              <Link href="/booking-terms" className={`text-sm font-bold transition-colors hover:${brand.colors.accent} text-stone-300`}>
+              <Link href="/booking-terms" className="text-sm font-bold transition-colors hover:text-brand-accent text-stone-300">
                 BOOKING TERMS
               </Link>
             </li>
@@ -121,15 +121,15 @@ export default async function Footer() {
           <h3 className="text-xs font-black uppercase tracking-[0.3em] text-stone-500 mb-6">Base Camp</h3>
           <ul className="space-y-4 text-stone-300 text-sm font-medium">
             <li className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-3">
-              <span className={brand.colors.accent}>📍</span> 
+              <span className="text-brand-accent">📍</span> 
               <span>{parseStrapiBlocks(contact.address)}</span>
             </li>
             <li className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-3">
-              <span className={brand.colors.accent}>📞</span> 
+              <span className="text-brand-accent">📞</span> 
               <a href={`tel:${contact.phone}`} className="hover:underline">{contact.phone}</a>
             </li>
             <li className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-3">
-              <span className={brand.colors.accent}>✉️</span> 
+              <span className="text-brand-accent">✉️</span> 
               <a href={`mailto:${contact.email || brand.email}`} className="hover:underline break-all">{contact.email || brand.email}</a>
             </li>
             <li className="flex flex-col items-center md:items-start gap-3 mt-6">

@@ -5,7 +5,6 @@ import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { STRAPI_URL, getBrand, getField, getStrapiMedia } from "@/lib/constants";
-
 import { getSiteName } from '@/lib/server-utils';
 import TrustBanner from "@/components/TrustBanner";
 
@@ -102,7 +101,7 @@ export default async function AboutUs({
     const featuredImgUrl = getStrapiMedia(pageContent.image, 'large');
 
     return (
-      <main className="min-h-screen bg-[#fafaf9] font-sans selection:bg-orange-200 overflow-x-hidden">
+      <main className="min-h-screen bg-stone-50 font-sans selection:bg-brand-accent/20 overflow-x-hidden">
         
         {/* --- CINEMATIC HERO --- */}
         <section className="relative h-screen min-h-[600px] md:min-h-[700px] flex items-center pt-24 md:pt-32 pb-24 overflow-hidden">
@@ -120,7 +119,7 @@ export default async function AboutUs({
           
           <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-8 w-full">
             <div className="max-w-4xl">
-                <span className="inline-block text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-orange-500 mb-6 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full">
+                <span className="inline-block text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-brand-accent mb-6 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full">
                     Established Excellence
                 </span>
                 
@@ -154,31 +153,30 @@ export default async function AboutUs({
                     </div>
                     <div className="absolute -bottom-6 -right-6 md:-bottom-8 md:-right-8 bg-stone-900 text-white p-6 md:p-10 rounded-[1.5rem] md:rounded-[2rem] shadow-xl max-w-[180px] md:max-w-[240px]">
                         <p className="text-[10px] uppercase tracking-widest opacity-60 mb-2">Years Active</p>
-                        <p className="text-3xl md:text-5xl font-black italic tracking-tighter" style={{ color: brand.colors.accent }}>
+                        <p className="text-3xl md:text-5xl font-black italic tracking-tighter text-brand-accent">
                             {getField(trustBannerData, "years_experience")}+
                         </p>
                     </div>
                 </div>
 
                 <div className="lg:col-span-7 mt-12 lg:mt-0">
-  {/* Smaller, more elegant label with brand accent color */}
-  <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-700 mb-6 block">
-    Our Founding Commitment
-  </h3>
+                  <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-brand-accent mb-6 block">
+                    Our Founding Commitment
+                  </h3>
 
-  {/* Reduced size, lighter weight, and improved line height for a 'classier' feel */}
-  <blockquote className="text-2xl md:text-4xl font-medium serif italic text-stone-800 leading-snug mb-8 break-words">
-    “{pageContent.philosophy}”
-  </blockquote>
+                  <div className="prose-gheralta">
+                    <blockquote className="text-2xl md:text-4xl font-medium font-serif italic text-stone-800 leading-snug mb-8 break-words">
+                      “{pageContent.philosophy}”
+                    </blockquote>
+                  </div>
 
-  {/* Refined footer with your brand's sandstone/burnt clay tones */}
-  <div className="flex items-center gap-4">
-    <div className="h-[1px] w-8 md:w-12 bg-stone-300" />
-    <span className="text-stone-500 italic serif text-sm md:text-base tracking-wide">
-      Founder
-    </span>
-  </div>
-</div>
+                  <div className="flex items-center gap-4">
+                    <div className="h-[1px] w-8 md:w-12 bg-stone-300" />
+                    <span className="text-stone-500 italic font-serif text-sm md:text-base tracking-wide">
+                      Founder
+                    </span>
+                  </div>
+                </div>
             </div>
           </div>
         </section>
@@ -192,7 +190,7 @@ export default async function AboutUs({
                   <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-stone-900 mb-8 md:mb-10 leading-[0.9]">
                     {getField(trustBannerData, "headline")}
                   </h2>
-                  <div className="w-20 md:w-24 h-2 mb-8 md:mb-10" style={{ backgroundColor: brand.colors.accent }} />
+                  <div className="w-20 md:w-24 h-2 mb-8 md:mb-10 bg-brand-accent" />
                   <p className="text-xl md:text-2xl text-stone-500 leading-relaxed font-light">
                     {getField(trustBannerData, "subheadline")}
                   </p>
@@ -201,10 +199,9 @@ export default async function AboutUs({
                     <p className="text-[10px] uppercase tracking-[0.3em] text-stone-400 mb-8">Service Impact</p>
                     <div className="space-y-12">
                         <div>
-                            <span className="text-5xl md:text-7xl font-black italic block leading-none" style={{ color: brand.colors.accent }}>
+                            <span className="text-5xl md:text-7xl font-black italic block leading-none text-brand-accent">
                                 {getField(trustBannerData, "client_count_label") || "Global"}
                             </span>
-                            
                         </div>
                     </div>
                 </div>
@@ -212,7 +209,7 @@ export default async function AboutUs({
 
               {/* TRUST BADGE WALL */}
               <div className="border-t border-stone-200 pt-16 md:pt-20">
-                <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-stone-400 mb-12 md:mb-16 text-center">DELIVERING 5-STAR RATED SERVICE FOR 10 YEARS IN A ROW</p>
+                <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-stone-400 mb-12 md:mb-16 text-center uppercase">DELIVERING 5-STAR RATED SERVICE FOR {getField(trustBannerData, "years_experience")} YEARS IN A ROW</p>
                 <div className="flex flex-wrap justify-center items-center gap-10 md:gap-24 opacity-80 hover:opacity-100 transition-all duration-700">
                     {badgesArray.map((badge: any, idx: number) => (
                       <div key={badge.id || idx} className="relative h-20 w-20 md:h-32 md:w-32 hover:scale-110 transition-transform">
@@ -228,47 +225,41 @@ export default async function AboutUs({
           </section>
         )}
 
-{/* --- THE PILLARS (CORE VALUES) --- */}
-{pageContent.values.length > 0 && (
-  <section className="py-24 md:py-32 bg-white">
-    <div className="max-w-6xl mx-auto px-6 md:px-8">
-      <div className="text-center mb-16 md:mb-24">
-        <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-stone-400 mb-6">Our Core Pillars</h3>
-        <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-stone-900">
-          How We <span style={{ color: brand.colors.accent }}>Lead</span>
-        </h2>
-      </div>
-
-      {/* Changed to grid-cols-1 to make boxes much wider */}
-      <div className="grid grid-cols-1 gap-px bg-stone-100 border border-stone-100 rounded-[2rem] md:rounded-[3rem] overflow-hidden">
-        {pageContent.values.map((value, idx) => {
-          const [label, ...rest] = value.split(':');
-          const description = rest.join(':').trim();
-
-          return (
-            <div key={idx} className="bg-white p-8 md:p-12 hover:bg-[#fafaf9] transition-colors group flex flex-col md:flex-row md:items-center gap-6 md:gap-12">
-              
-              {/* HEADER (Label): Reduced size from 7xl to 4xl/5xl and set a fixed width on desktop to prevent stretching */}
-              <div className="md:w-1/3">
-                <span className="text-stone-100 font-black text-4xl md:text-5xl transition-colors group-hover:text-orange-500/20 leading-none uppercase italic tracking-tighter inline-block">
-                  {label}
-                </span>
+        {/* --- THE PILLARS (CORE VALUES) --- */}
+        {pageContent.values.length > 0 && (
+          <section className="py-24 md:py-32 bg-white">
+            <div className="max-w-6xl mx-auto px-6 md:px-8">
+              <div className="text-center mb-16 md:mb-24">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-stone-400 mb-6">Our Core Pillars</h3>
+                <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-stone-900">
+                  How We <span className="text-brand-accent">Lead</span>
+                </h2>
               </div>
 
-              {/* BODY (Description): Reduced size to text-lg/xl and kept bold/italic */}
-              <div className="md:w-2/3">
-                <h4 className="text-stone-800 font-bold italic text-base md:text-lg leading-relaxed uppercase tracking-wide group-hover:translate-x-2 transition-transform duration-500">
-                  {description}
-                </h4>
+              <div className="grid grid-cols-1 gap-px bg-stone-100 border border-stone-100 rounded-[2rem] md:rounded-[3rem] overflow-hidden">
+                {pageContent.values.map((value, idx) => {
+                  const [label, ...rest] = value.split(':');
+                  const description = rest.join(':').trim();
+
+                  return (
+                    <div key={idx} className="bg-white p-8 md:p-12 hover:bg-stone-50 transition-colors group flex flex-col md:flex-row md:items-center gap-6 md:gap-12">
+                      <div className="md:w-1/3">
+                        <span className="text-stone-100 font-black text-4xl md:text-5xl transition-colors group-hover:text-brand-accent/20 leading-none uppercase italic tracking-tighter inline-block">
+                          {label}
+                        </span>
+                      </div>
+                      <div className="md:w-2/3">
+                        <h4 className="text-stone-800 font-bold italic text-base md:text-lg leading-relaxed uppercase tracking-wide group-hover:translate-x-2 transition-transform duration-500">
+                          {description}
+                        </h4>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              
             </div>
-          );
-        })}
-      </div>
-    </div>
-  </section>
-)}
+          </section>
+        )}
 
         {/* --- PARTNER LOGOS SECTION --- */}
         {logosArray.length > 0 && (
@@ -302,12 +293,11 @@ export default async function AboutUs({
             </div>
             <div className="relative z-10 max-w-4xl mx-auto px-6 md:px-8">
                 <h2 className="text-4xl md:text-8xl font-black uppercase italic tracking-tighter mb-12 md:mb-16 leading-[1] md:leading-[0.9]">
-                    Ready to write <br className="hidden md:block"/>your own <span style={{ color: brand.colors.accent }}>story?</span>
+                    Ready to write <br className="hidden md:block"/>your own <span className="text-brand-accent">story?</span>
                 </h2>
                 <Link 
                     href="/tours" 
-                    className="group relative inline-flex items-center gap-6 md:gap-8 text-white px-10 md:px-12 py-5 md:py-6 rounded-full font-black uppercase tracking-widest text-xs md:text-sm transition-all overflow-hidden"
-                    style={{ backgroundColor: brand.colors.accent }}
+                    className="group relative inline-flex items-center gap-6 md:gap-8 text-white px-10 md:px-12 py-5 md:py-6 rounded-full font-black uppercase tracking-widest text-xs md:text-sm transition-all overflow-hidden bg-brand-accent hover:bg-brand-hover"
                 >
                     <span className="relative z-10">Start Your Journey Now!</span>
                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
@@ -318,7 +308,7 @@ export default async function AboutUs({
     );
   } catch (error: any) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#fafaf9]">
+      <div className="min-h-screen flex items-center justify-center bg-stone-50">
         <div className="text-center px-6">
             <h1 className="text-xl font-black uppercase italic text-stone-400 mb-4">Content Unavailable</h1>
             <Link href="/" className="text-[10px] font-black uppercase tracking-widest border-b-2 border-stone-900 pb-1">Return Home</Link>

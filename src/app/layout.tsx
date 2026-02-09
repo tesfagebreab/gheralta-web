@@ -1,6 +1,4 @@
 // src/app/layout.tsx
-// RAILPACK CACHE BUST - 2026-02-08 FINAL - STRAPI V5 COMPATIBLE
-
 import type { Metadata, Viewport } from "next";
 import { Inter, DM_Serif_Display, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
@@ -10,20 +8,31 @@ import SelectedToursFloat from "@/components/SelectedToursFloat";
 import { getBrand, STRAPI_URL, getStrapiMedia, getField } from "@/lib/constants";
 import { getSiteName } from '@/lib/server-utils';
 
-// Force fresh data on every request for multi-tenant domain switching
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// ISR Strategy: Revalidate once per hour to balance speed and freshness
+export const revalidate = 3600;
 
 /**
- * Viewport export: sets brand theme color dynamically based on the sandstone palette
+ * Dynamic Viewport: Adjusts the browser chrome/mobile status bar color
  */
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: "#c2410c", // Burnt Clay / Sandstone primary
-};
+export async function generateViewport(): Promise<Viewport> {
+  const currentSite = await getSiteName();
+  const brandConfig = getBrand(currentSite);
+  
+  // Mapping theme colors to the brand's primary identity
+  const themeColors = {
+    tours: "#c2410c",       // Burnt Clay
+    adventures: "#15803d",  // Trek Green
+    abuneyemata: "#b45309"  // Updated to match globals.css Deep Ochre
+  };
+
+  return {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    themeColor: themeColors[brandConfig.id as keyof typeof themeColors] || "#c2410c",
+  };
+}
 
 const sans = Inter({
   variable: "--font-sans",
@@ -42,21 +51,18 @@ const mono = JetBrains_Mono({
 });
 
 /**
- * Helper to fetch brand-specific assets (Logo, Favicon) from Strapi v5
+ * Helper to fetch brand-specific assets from Strapi v5
  */
 export async function getBrandAssets() {
   const currentSite = await getSiteName();
 
   try {
-    // Using $eqi for case-insensitive matching in Strapi v5
     const res = await fetch(`${STRAPI_URL}/api/domains?filters[name][$eqi]=${currentSite}&populate=*`, {
       next: { revalidate: 3600 }
     });
     
     if (!res.ok) throw new Error("Failed to fetch domain assets");
     const json = await res.json();
-    
-    // Strapi v5 Normalization: Return the first item
     return json.data?.[0] || null;
   } catch (error) {
     console.error("Layout: Failed to fetch brand assets", error);
@@ -69,11 +75,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const brandConfig = getBrand(currentSite);
   const rawBrandData = await getBrandAssets();
   
-  // Use getField helper for v5 resilience (handles .attributes or flat)
   const faviconObj = getField(rawBrandData, 'favicon');
   const logoObj = getField(rawBrandData, 'brand_logo');
-  
-  // Fallback chain for favicon: Strapi Favicon > Strapi Logo > Static Icon
   const faviconUrl = getStrapiMedia(faviconObj || logoObj, 'thumbnail') || "/icon.png";
   
   return {
@@ -81,29 +84,17 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${brandConfig.name}`,
       default: `${brandConfig.name} | Gheralta Mountains Expedition`,
     },
-    description: brandConfig.description || `Expert-led tours and adventures in the Gheralta Mountains, Tigray.`,
+    description: brandConfig.description,
     metadataBase: new URL(`https://${currentSite}`),
     icons: {
-      icon: [
-        { url: faviconUrl, type: 'image/png' },
-        { url: faviconUrl, sizes: '32x32', type: 'image/png' },
-      ],
+      icon: [{ url: faviconUrl, type: 'image/png' }],
       shortcut: faviconUrl,
-      apple: [
-        { url: faviconUrl, sizes: '180x180', type: 'image/png' },
-      ],
-    },
-    appleWebApp: {
-      capable: true,
-      statusBarStyle: "default",
-      title: brandConfig.name,
+      apple: [{ url: faviconUrl, sizes: '180x180', type: 'image/png' }],
     },
     openGraph: {
       title: brandConfig.name,
       description: brandConfig.description,
       siteName: brandConfig.name,
-      locale: 'en_US',
-      type: 'website',
       images: logoObj ? [getStrapiMedia(logoObj)] : [],
     },
   };
@@ -114,20 +105,34 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Identify the domain and brand configuration
   const currentSite = await getSiteName();
   const brandConfig = getBrand(currentSite);
   
-  // Create the CSS class selector (e.g., brand-tours, brand-abuneyemata) 
-  // to toggle variables in globals.css
-  const brandClassName = `brand-${brandConfig.id}`;
+  // Data-attribute for CSS Variable targeting
+  // Class name for manual legacy overrides
+  const brandId = brandConfig.id;
+  const brandClassName = `brand-${brandId}`;
+
+  // Fix for the red underline: cast to any safely for the contact field
+  const whatsappNumber = (brandConfig as any).contact?.whatsapp || '';
 
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth" data-brand={brandId}>
       <body
-        className={`${sans.variable} ${serif.variable} ${mono.variable} ${brandClassName} antialiased font-sans flex flex-col min-h-screen overflow-x-hidden`}
+        className={`
+          ${sans.variable} 
+          ${serif.variable} 
+          ${mono.variable} 
+          ${brandClassName} 
+          antialiased 
+          font-sans 
+          flex 
+          flex-col 
+          min-h-screen 
+          overflow-x-hidden
+        `}
       >
-        {/* Pass domain to components that need server-side brand context if needed */}
+        {/* Components automatically pick up brand colors from CSS variables */}
         <Navbar />
         
         <main className="flex-grow w-full max-w-full overflow-x-hidden">

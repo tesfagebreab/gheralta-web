@@ -12,10 +12,6 @@ import TourGallery from "@/components/TourGallery";
 
 // --- HELPERS ---
 
-/**
- * Advanced Block Parser for Strapi v5
- * Handles Bold, Italic, Underline, Text Alignment, and Hyperlinks
- */
 const renderStrapiBlocks = (content: any) => {
   if (!content) return null;
   
@@ -127,10 +123,9 @@ export default function TourDetail() {
     async function fetchTour() {
       if (!slug) return;
       try {
-        // Optimized Strapi v5 query using our utility
         const response = await fetchAPI('/tours', {
           filters: {
-            slug: { $eqi: slug } // Case-insensitive for production stability
+            slug: { $eqi: slug }
           },
           populate: {
             DailyPlan: { populate: '*' },
@@ -246,7 +241,7 @@ export default function TourDetail() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <nav className="p-6 border-b border-slate-100 flex justify-between items-center">
-        <Link href="/tours" className={`${brand.accent} font-bold hover:underline transition-all uppercase text-[10px] tracking-widest`}>
+        <Link href="/tours" className="text-brand-accent font-bold hover:underline transition-all uppercase text-[10px] tracking-widest">
           ← Back to Tours
         </Link>
         <span className="font-black italic tracking-tighter uppercase">{(brand.name || "Tour").split(' ')[0]}.</span>
@@ -287,7 +282,7 @@ export default function TourDetail() {
               { label: "Destinations", value: safeText(tour.Destinations, true), icon: <MapPin size={20} /> }
             ].map((fact, i) => (
               <div key={i} className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                <span className={`${brand.accent} mb-2 block`}>{fact.icon}</span>
+                <span className="text-brand-accent mb-2 block">{fact.icon}</span>
                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{fact.label}</p>
                 <div className="font-bold text-slate-900 text-sm whitespace-pre-line">{fact.value || "Request Info"}</div>
               </div>
@@ -295,7 +290,7 @@ export default function TourDetail() {
           </div>
 
           <h2 className="text-3xl font-black italic uppercase tracking-tight mb-6">Adventure Overview</h2>
-          <div className={`text-xl text-slate-600 leading-relaxed border-l-4 ${brand.accent.replace('text-', 'border-')}/20 pl-6 mb-16`}>
+          <div className={`prose-gheralta text-xl text-slate-600 leading-relaxed border-l-4 border-brand-accent/20 pl-6 mb-16`}>
             {renderStrapiBlocks(tour.Description) || "Description details are coming soon."}
           </div>
 
@@ -309,7 +304,7 @@ export default function TourDetail() {
                 <button 
                   key={t.id}
                   onClick={() => setActiveTab(t.id)}
-                  className={`pb-4 text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === t.id ? `${brand.accent} border-b-2 ${brand.accent.replace('text-', 'border-')}` : "text-slate-400"}`}
+                  className={`pb-4 text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === t.id ? `text-brand-accent border-b-2 border-brand-accent` : "text-slate-400"}`}
                 >
                   {t.icon} {t.label}
                 </button>
@@ -321,12 +316,12 @@ export default function TourDetail() {
                 <div className="relative border-l-2 border-slate-100 ml-4 md:ml-6 space-y-12">
                   {itinerary.length > 0 ? itinerary.map((day: any, index: number) => (
                     <div key={index} className="relative pl-12 group">
-                      <div className={`absolute -left-[13px] top-0 w-6 h-6 rounded-full border-4 border-white shadow-md transition-transform group-hover:scale-125 ${brand.bgAccent}`} />
+                      <div className={`absolute -left-[13px] top-0 w-6 h-6 rounded-full border-4 border-white shadow-md transition-transform group-hover:scale-125 bg-brand-accent`} />
                       <div className="flex flex-col">
                         <h3 className="font-black italic uppercase text-2xl text-slate-900 mb-3 tracking-tighter leading-tight break-words">
                           {day.DayTitle || `Day ${index + 1}`}
                         </h3>
-                        <div className="text-slate-600 leading-relaxed text-lg max-w-2xl break-words">
+                        <div className="prose-gheralta text-slate-600 leading-relaxed text-lg max-w-2xl break-words">
                           {renderStrapiBlocks(day.Activities) || "Activities for this day are being finalized."}
                         </div>
                       </div>
@@ -339,7 +334,7 @@ export default function TourDetail() {
 
               {activeTab === "inclusions" && (
                 <div className="bg-slate-50 p-10 rounded-[3rem]">
-                  <div className="text-slate-600 leading-relaxed font-medium text-lg break-words">
+                  <div className="prose-gheralta text-slate-600 leading-relaxed font-medium text-lg break-words">
                     {renderStrapiBlocks(tour.Inclusions) || "Inclusions list is currently being updated."}
                   </div>
                 </div>
@@ -347,7 +342,7 @@ export default function TourDetail() {
 
               {activeTab === "bring" && (
                 <div className="bg-slate-50 p-10 rounded-[3rem]">
-                  <div className="text-slate-600 leading-relaxed text-lg break-words">
+                  <div className="prose-gheralta text-slate-600 leading-relaxed text-lg break-words">
                     {renderStrapiBlocks(tour.WhatToBring) || "Gear requirements will be provided upon booking."}
                   </div>
                 </div>
@@ -378,9 +373,9 @@ export default function TourDetail() {
                 </div>
                 <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900 mb-4">Inquiry Received</h2>
                 <p className="text-slate-600 italic max-w-md mx-auto leading-relaxed mb-8">
-                  Thank you for reaching out! Expect a response within <span className={`text-slate-900 font-bold not-italic underline ${brand.accent.replace('text-', 'decoration-')} ml-1`}>24 hours</span>.
+                  Thank you for reaching out! Expect a response within <span className="text-slate-900 font-bold not-italic underline decoration-brand-accent ml-1">24 hours</span>.
                 </p>
-                <button onClick={() => setIsSubmitted(false)} className={`text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ${brand.accent.replace('text-', 'hover:text-')} transition-all`}>
+                <button onClick={() => setIsSubmitted(false)} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-brand-accent transition-all">
                   ← Send another message
                 </button>
               </div>
@@ -401,15 +396,15 @@ export default function TourDetail() {
                   ].map((field, i) => (
                     <div key={i} className="flex flex-col gap-1">
                       <label className="text-[10px] font-black uppercase text-slate-400 ml-2">{field.label}</label>
-                      <input required type={field.type} className={`bg-white border border-slate-200 rounded-2xl p-4 focus:ring-2 ${brand.accent.replace('text-', 'focus:ring-')} outline-none`} />
+                      <input required type={field.type} className="bg-white border border-slate-200 rounded-2xl p-4 focus:ring-2 focus:ring-brand-accent outline-none" />
                     </div>
                   ))}
                   <div className="flex flex-col gap-1 md:col-span-2">
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Tell us More</label>
-                    <textarea required rows={5} className={`bg-white border border-slate-200 rounded-2xl p-4 focus:ring-2 ${brand.accent.replace('text-', 'focus:ring-')} outline-none resize-none`} />
+                    <textarea required rows={5} className="bg-white border border-slate-200 rounded-2xl p-4 focus:ring-2 focus:ring-brand-accent outline-none resize-none" />
                   </div>
                   <div className="md:col-span-2">
-                    <button disabled={isSubmitting} type="submit" className={`w-full ${brand.bgAccent} text-white font-black py-5 rounded-2xl ${brand.buttonHover} transition-all uppercase tracking-[0.2em] text-sm shadow-xl disabled:bg-slate-400`}>
+                    <button disabled={isSubmitting} type="submit" className="w-full bg-brand-accent text-white font-black py-5 rounded-2xl hover:bg-brand-accent-hover transition-all uppercase tracking-[0.2em] text-sm shadow-xl disabled:bg-slate-400">
                       {isSubmitting ? "SENDING..." : "SEND INQUIRY"}
                     </button>
                   </div>
@@ -431,7 +426,7 @@ export default function TourDetail() {
               </div>
               <div className="flex flex-col gap-3">
                 {hasPricing && (
-                  <button onClick={handleToggleCart} className={`w-full font-black py-5 rounded-2xl transition-all uppercase tracking-widest text-xs text-center shadow-lg ${isInCart ? "bg-slate-900 text-white" : `${brand.bgAccent} text-white ${brand.buttonHover}`}`}>
+                  <button onClick={handleToggleCart} className={`w-full font-black py-5 rounded-2xl transition-all uppercase tracking-widest text-xs text-center shadow-lg ${isInCart ? "bg-slate-900 text-white" : "bg-brand-accent text-white hover:bg-brand-accent-hover"}`}>
                     {isInCart ? "Go to Check Out!" : "+ Add to Tour Cart"}
                   </button>
                 )}

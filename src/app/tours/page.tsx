@@ -43,7 +43,7 @@ export default function ToursPage() {
         const json = await response.json();
         const data = json.data || [];
 
-        // Domain Filtering
+        // Domain Filtering (Untouched)
         const domainFiltered = data.filter((tour: any) => {
           const domains = tour.domains || [];
           if (domains.length === 0) return true; 
@@ -56,19 +56,18 @@ export default function ToursPage() {
 
         setTours(domainFiltered);
 
-        // --- AUTOMATIC SELECTION BASED ON URL ---
+        // --- AUTOMATIC SELECTION BASED ON URL (Untouched) ---
         const params = new URLSearchParams(window.location.search);
         const typeSlug = params.get("type");
         const diffParam = params.get("difficulty");
         const durParam = params.get("duration");
 
         if (typeSlug) {
-          // Adding : any to 't' and 'ty' satisfies the build requirements
-const allTypes = domainFiltered.flatMap((t: any) => getField(t, 'types') || []);
-const match = allTypes.find((ty: any) => 
-  getField(ty, 'Slug') === typeSlug || 
-  getField(ty, 'Title')?.toLowerCase().replace(/\s+/g, '-') === typeSlug.toLowerCase()
-);
+          const allTypes = domainFiltered.flatMap((t: any) => getField(t, 'types') || []);
+          const match = allTypes.find((ty: any) => 
+            getField(ty, 'Slug') === typeSlug || 
+            getField(ty, 'Title')?.toLowerCase().replace(/\s+/g, '-') === typeSlug.toLowerCase()
+          );
           if (match) setFilterType(getField(match, 'Title'));
         }
 
@@ -85,7 +84,7 @@ const match = allTypes.find((ty: any) =>
     fetchTours();
   }, []);
 
-  // Filter Logic
+  // Filter Logic (Untouched)
   useEffect(() => {
     let result = tours;
 
@@ -130,7 +129,7 @@ const match = allTypes.find((ty: any) =>
     <main className="max-w-6xl mx-auto p-4 md:p-12 pt-24 font-sans overflow-x-hidden">
       <header className="mb-10 md:mb-16 px-2">
         <h1 className="text-4xl md:text-7xl font-black text-slate-900 uppercase italic tracking-tighter leading-tight break-words">
-          Our <span className={brand.accent}>Expeditions</span>
+          Our <span className="text-brand-accent">Expeditions</span>
         </h1>
         <p className="text-slate-400 mt-3 md:mt-4 font-bold uppercase tracking-[0.2em] text-[9px] md:text-[10px]">
           Curated experiences for {window.location.hostname.replace('www.', '')}
@@ -138,45 +137,42 @@ const match = allTypes.find((ty: any) =>
       </header>
 
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
-        {/* FILTERS - Responsive Scroll on Mobile */}
+        {/* FILTERS */}
         <aside className="w-full lg:w-48 flex-shrink-0 space-y-8 lg:space-y-10">
-          {/* Types Filter */}
           <div className="px-2 lg:px-0">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900 mb-4 md:mb-6 border-b border-slate-100 pb-2">Types</h3>
             <div className="flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0 no-scrollbar">
               <button onClick={() => setFilterType("All")} className="flex items-center gap-2 md:gap-3 group text-left whitespace-nowrap shrink-0">
-                <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterType === "All" ? brand.bgAccent : "border-slate-300 group-hover:border-orange-400"}`} />
+                <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterType === "All" ? brand.bgAccent : "border-slate-300 group-hover:border-brand-accent"}`} />
                 <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-tight ${filterType === "All" ? "text-slate-900" : "text-slate-400"}`}>All Types</span>
               </button>
               {uniqueTypes.map((t: any) => (
                 <button key={t} onClick={() => setFilterType(t)} className="flex items-center gap-2 md:gap-3 group text-left whitespace-nowrap shrink-0">
-                  <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterType === t ? brand.bgAccent : "border-slate-300 group-hover:border-orange-400"}`} />
+                  <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterType === t ? brand.bgAccent : "border-slate-300 group-hover:border-brand-accent"}`} />
                   <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-tight ${filterType === t ? "text-slate-900" : "text-slate-400"}`}>{t}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Difficulty Filter */}
           <div className="px-2 lg:px-0">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900 mb-4 md:mb-6 border-b border-slate-100 pb-2">Difficulty</h3>
             <div className="flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0 no-scrollbar">
               {["All", "Easy", "Moderate", "Challenging", "Extreme"].map((d) => (
                 <button key={d} onClick={() => setFilterDifficulty(d)} className="flex items-center gap-2 md:gap-3 group text-left whitespace-nowrap shrink-0">
-                  <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterDifficulty === d ? brand.bgAccent : "border-slate-300 group-hover:border-orange-400"}`} />
+                  <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterDifficulty === d ? brand.bgAccent : "border-slate-300 group-hover:border-brand-accent"}`} />
                   <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-tight ${filterDifficulty === d ? "text-slate-900" : "text-slate-400"}`}>{d === "All" ? "All Levels" : d}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Duration Filter */}
           <div className="px-2 lg:px-0">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900 mb-4 md:mb-6 border-b border-slate-100 pb-2">Duration</h3>
             <div className="flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0 no-scrollbar">
               {["All", "Short (<3 Days)", "Medium (3-6 Days)", "Long (7+ Days)"].map((dur) => (
                 <button key={dur} onClick={() => setFilterDuration(dur)} className="flex items-center gap-2 md:gap-3 group text-left whitespace-nowrap shrink-0">
-                  <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterDuration === dur ? brand.bgAccent : "border-slate-300 group-hover:border-orange-400"}`} />
+                  <div className={`w-3 h-3 md:w-4 md:h-4 rounded border transition-colors ${filterDuration === dur ? brand.bgAccent : "border-slate-300 group-hover:border-brand-accent"}`} />
                   <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-tight ${filterDuration === dur ? "text-slate-900" : "text-slate-400"}`}>{dur === "All" ? "All Durations" : dur}</span>
                 </button>
               ))}
@@ -243,11 +239,12 @@ const match = allTypes.find((ty: any) =>
                   
                   <div className="px-2 md:px-4 flex-grow">
                     <Link href={`/tours/${slug}`}>
-                      <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tighter uppercase italic mb-2 md:mb-3 leading-tight break-words group-hover:text-orange-700 transition-colors">
+                      <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tighter uppercase italic mb-2 md:mb-3 leading-tight break-words group-hover:text-brand-accent transition-colors">
                         {title}
                       </h2>
                     </Link>
-                    <div className="text-slate-500 text-xs md:text-sm line-clamp-3 mb-5 md:mb-6 font-medium leading-relaxed break-words">
+                    {/* Applying prose-gheralta class for rich text parsing */}
+                    <div className="prose-gheralta text-slate-500 text-xs md:text-sm line-clamp-3 mb-5 md:mb-6 font-medium leading-relaxed break-words">
                       {parseStrapiBlocks(description)}
                     </div>
                   </div>
@@ -275,7 +272,7 @@ const match = allTypes.find((ty: any) =>
               <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px] md:text-[10px]">
                 {error ? "Connection Failed" : "No expeditions match your filters"}
               </p>
-              <button onClick={() => {setFilterType('All'); setFilterDifficulty('All'); setFilterDuration('All')}} className="mt-4 text-[9px] md:text-[10px] font-black underline uppercase text-slate-900 hover:text-orange-700">Clear All Filters</button>
+              <button onClick={() => {setFilterType('All'); setFilterDifficulty('All'); setFilterDuration('All')}} className="mt-4 text-[9px] md:text-[10px] font-black underline uppercase text-slate-900 hover:text-brand-accent">Clear All Filters</button>
             </div>
           )}
         </div>

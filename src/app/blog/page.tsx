@@ -9,25 +9,34 @@ export const revalidate = 0;
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = getBrand();
+  const currentSite = await getSiteName();
   return {
-    title: `Our Thinking | ${brand.name}`,
+    title: `The Journal | ${brand.name}`,
     description: `Stories, guides, and insights from the heart of the Gheralta Mountains with ${brand.name}.`,
+    openGraph: {
+      title: `The Journal | ${brand.name}`,
+      description: `Dispatches from Gheralta.`,
+    }
   };
 }
 
 export default async function BlogPage() {
   const brand = getBrand();
-  const currentSite = await getSiteName ();
+  const currentSite = await getSiteName();
 
   try {
+    // Fetch posts with necessary relations: categories, featured_image, and domains for filtering
     const res = await fetch(
-      `${STRAPI_URL}/api/posts?populate=*&sort=createdAt:desc`,
+      `${STRAPI_URL}/api/posts?populate[0]=featured_image&populate[1]=categories&populate[2]=domains&sort=createdAt:desc`,
       { cache: 'no-store' }
     );
+    
+    if (!res.ok) throw new Error(`Failed to fetch posts: ${res.status}`);
     
     const json = await res.json();
     const allPosts = json.data || [];
 
+    // Filter posts based on the current domain/site name
     const posts = allPosts.filter((post: any) => {
       const domainRelation = post.domains || post.attributes?.domains;
       const domainList = Array.isArray(domainRelation) ? domainRelation : (domainRelation?.data || []);
@@ -49,22 +58,22 @@ export default async function BlogPage() {
     };
 
     return (
-      <main className="bg-[#fafaf9] pt-28 md:pt-40 pb-16 md:pb-24 min-h-screen font-sans">
+      <main className="bg-stone-50 pt-28 md:pt-40 pb-16 md:pb-24 min-h-screen font-sans selection:bg-brand-accent/20">
         <div className="max-w-7xl mx-auto px-5 md:px-6">
           
           <header className="mb-12 md:mb-20">
             <h1 className="text-6xl md:text-9xl font-black italic text-stone-900 leading-[0.9] md:leading-[0.8] uppercase tracking-tighter">
-              The <span className={brand.accent}>Journal</span>
+              The <span className="text-brand-accent">Journal</span>
             </h1>
             <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-stone-400 mt-6 md:mt-8 flex items-center gap-4">
-              <span className={`w-8 md:w-12 h-[1px] ${brand.bgAccent}`} />
+              <span className="w-8 md:w-12 h-[1px] bg-brand-accent" />
               Dispatches from Gheralta
             </p>
           </header>
 
           {posts.length > 0 ? (
             <>
-              {/* Featured Post (Hero) */}
+              {/* Featured Post (Hero Layout) */}
               {featuredPost && (
                 <section className="mb-20 md:mb-32 group">
                   <Link href={`/blog/${getField(featuredPost, 'slug')}`} className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -81,12 +90,12 @@ export default async function BlogPage() {
                     <div className="lg:col-span-5 px-1 md:px-0">
                       <div className="flex flex-wrap gap-2 mb-6 md:mb-8">
                         {getField(featuredPost, 'categories')?.map((cat: any) => (
-                          <span key={cat.id} className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest text-white ${brand.bgAccent} px-3 md:px-4 py-1.5 rounded-full`}>
+                          <span key={cat.id} className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-white bg-brand-accent px-3 md:px-4 py-1.5 rounded-full">
                             {getField(cat, 'Title') || getField(cat, 'name')}
                           </span>
                         ))}
                       </div>
-                      <h2 className="text-3xl md:text-6xl font-black italic text-stone-900 uppercase tracking-tighter leading-[0.95] md:leading-[0.9] mb-6 md:mb-8 break-words">
+                      <h2 className="text-3xl md:text-6xl font-black italic text-stone-900 uppercase tracking-tighter leading-[0.95] md:leading-[0.9] mb-6 md:mb-8 break-words group-hover:text-brand-accent transition-colors">
                         {getField(featuredPost, 'title')}
                       </h2>
                       <p className="text-stone-600 text-lg md:text-xl mb-8 md:mb-10 line-clamp-3 leading-relaxed font-serif italic">
@@ -96,7 +105,7 @@ export default async function BlogPage() {
                         <span className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] border-b-2 border-stone-900 pb-1">
                           Read Story
                         </span>
-                        <span className={`w-8 h-8 rounded-full flex items-center justify-center text-white ${brand.bgAccent} group-hover/btn:translate-x-2 transition-transform`}>
+                        <span className="w-8 h-8 rounded-full flex items-center justify-center text-white bg-brand-accent group-hover/btn:translate-x-2 transition-transform">
                           →
                         </span>
                       </div>
@@ -122,19 +131,19 @@ export default async function BlogPage() {
                       <div className="px-2">
                         <div className="flex gap-4 mb-3 md:mb-4">
                            {getField(post, 'categories')?.slice(0, 1).map((cat: any) => (
-                            <span key={cat.id} className={`text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] ${brand.accent}`}>
+                            <span key={cat.id} className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] text-brand-accent">
                               {getField(cat, 'Title') || getField(cat, 'name')}
                             </span>
                           ))}
                         </div>
-                        <h3 className="text-xl md:text-2xl font-black italic text-stone-900 uppercase tracking-tighter leading-tight mb-3 md:mb-4 group-hover:text-stone-600 transition-colors">
+                        <h3 className="text-xl md:text-2xl font-black italic text-stone-900 uppercase tracking-tighter leading-tight mb-3 md:mb-4 group-hover:text-brand-accent transition-colors">
                           {getField(post, 'title')}
                         </h3>
                         <p className="text-stone-500 text-sm line-clamp-2 mb-6 md:mb-8 leading-relaxed">
                           {getField(post, 'excerpt')}
                         </p>
-                        <div className="text-[9px] font-black uppercase tracking-[0.3em] text-stone-900 flex items-center gap-2">
-                          Read dispatch <span className={brand.accent}>+</span>
+                        <div className="text-[9px] font-black uppercase tracking-[0.3em] text-stone-900 flex items-center gap-2 group-hover:gap-4 transition-all">
+                          Read dispatch <span className="text-brand-accent">+</span>
                         </div>
                       </div>
                     </Link>
@@ -143,7 +152,7 @@ export default async function BlogPage() {
               </section>
             </>
           ) : (
-            <div className="py-20 md:py-32 text-center border-2 border-dashed border-stone-200 rounded-[2rem] md:rounded-[4rem] bg-stone-50/50">
+            <div className="py-20 md:py-32 text-center border-2 border-dashed border-stone-200 rounded-[2rem] md:rounded-[4rem] bg-stone-100/50">
                <p className="text-stone-400 font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-[10px] md:text-[11px] px-6">
                  No dispatches available for {currentSite} yet.
                </p>
@@ -155,8 +164,9 @@ export default async function BlogPage() {
   } catch (error) {
     console.error("Blog Page Error:", error);
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafaf9] px-6 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 px-6 text-center">
         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400">Connection to basecamp lost...</p>
+        <Link href="/" className="mt-8 text-[10px] font-black uppercase tracking-widest border-b-2 border-stone-900 pb-1">Return Home</Link>
       </div>
     );
   }
